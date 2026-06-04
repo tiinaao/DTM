@@ -14,31 +14,32 @@ public class PlayerInputHandler : MonoBehaviour
     [SerializeField] private string rotation = "Rotation";
     [SerializeField] private string jump = "Jump";
     [SerializeField] private string sprint = "Sprint";
-    [SerializeField] private string esc = "Esc";
     [SerializeField] private string interact = "Interact";
+    [SerializeField] private string esc = "Esc";
 
     private InputAction movementAction;
     private InputAction rotationAction;
     private InputAction jumpAction;
     private InputAction sprintAction;
-    private InputAction escAction;
     private InputAction interactAction;
+    private InputAction escAction;
+
     public Vector2 MovementInput { get; private set; }
     public Vector2 RotationInput { get; private set; }
     public bool JumpTriggered { get; private set; }
     public bool SprintTriggered { get; private set; }
-    public bool EscTriggered => escAction.WasPressedThisFrame();
     public bool InteractTriggered => interactAction.WasPressedThisFrame();
-    
-    public void Awake()
+    public bool EscTriggered => escAction.WasPressedThisFrame();
+
+    private void Awake()
     {
         InputActionMap actionMap = playerControls.FindActionMap(actionMapName);
         movementAction = actionMap.FindAction(movement);
         rotationAction = actionMap.FindAction(rotation);
         jumpAction = actionMap.FindAction(jump);
         sprintAction = actionMap.FindAction(sprint);
-        escAction = actionMap.FindAction(esc);
         interactAction = actionMap.FindAction(interact);
+        escAction = actionMap.FindAction(esc);
 
         SubscribeActionValueToInputEvent();
     }

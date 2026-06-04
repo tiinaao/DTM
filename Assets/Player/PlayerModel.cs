@@ -31,20 +31,6 @@ public class PlayerModel : MonoBehaviour
 
     private void Update()
     {
-        if (playerInputHandler.EscTriggered)
-        {
-            if (Cursor.lockState == CursorLockMode.Locked)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-        }
-
         HandleMovement();
         HandleRotation();
     }
