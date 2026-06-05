@@ -68,4 +68,18 @@ public class PlayerInputHandler : MonoBehaviour
     {
         playerControls.FindActionMap(actionMapName).Disable();
     }
+
+    public void DisableInput()
+    {
+        playerControls.FindActionMap(actionMapName).Disable();
+        MovementInput = Vector2.zero;
+        RotationInput = Vector2.zero;
+        JumpTriggered = false;
+        SprintTriggered = false;
+    }
+
+    public void EnableInput()
+    {
+        playerControls.FindActionMap(actionMapName).Enable();
+    }
 }
