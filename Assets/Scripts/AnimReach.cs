@@ -47,7 +47,6 @@ public class AnimReach : MonoBehaviour
 
     void Start()
     {
-        if (bonesRoot == null) { Debug.LogError("Assign bonesRoot!"); return; }
         StartCoroutine(Init());
     }
 
