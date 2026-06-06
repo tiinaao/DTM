@@ -121,7 +121,7 @@ Material:
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 0
-    - _alpha: 0.92
+    - _alpha: 1.03
     - _brightness_of_whatever: 4.19
     - _metalness: 0.657
     - _position_of_a_whatever: 0.17
