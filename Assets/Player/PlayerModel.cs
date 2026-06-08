@@ -3,25 +3,58 @@ using UnityEngine;
 public class PlayerModel : MonoBehaviour
 {
     [Header("Movement Speeds")]
-    [SerializeField] private float walkSpeed = 4.0f;
+    public float walkSpeed = 4.0f;
     [SerializeField] private float sprintMultiplier = 2.0f;
+    [SerializeField] private float sneakMultiplier = 0.4f;
 
     [Header("Jump Parameters")]
-    [SerializeField] private float jumpForce = 7.0f;
+    [SerializeField] private float jumpForce = 8.5f;
     [SerializeField] private float gravityMultiplayer = 2.0f;
+    [SerializeField] private float jumpStaminaCost = 0.1f;
 
     [Header("Look Parameters")]
     [SerializeField] private float mouseSensitivity = 0.2f;
     [SerializeField] private float upDownLookRange = 80.0f;
 
-    [Header("Referances")]
+    [Header("Climbing")]
+    [SerializeField] private float climbCheckDistance = 0.45f;
+    [SerializeField] private float climbStepForce = 8.0f;
+    [SerializeField] private float climbHoldGravityScale = 0.05f;
+    [SerializeField] private LayerMask climbableLayers;
+
+    [Header("References")]
     [SerializeField] private CharacterController characterController;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private PlayerInputHandler playerInputHandler;
+    [SerializeField] private Stamina stamina;
+    [SerializeField] private AnimReach animReach;
 
     private Vector3 currentMovement;
     private float verticalRotation;
-    private float CurrentSpeed => walkSpeed * (playerInputHandler.SprintTriggered ? sprintMultiplier : 1);
+
+    private bool isClimbing;
+    private bool wasJumpHeld;
+    private bool vaulting;
+    private bool vaultUpApplied;
+    private bool jumpConsumed;
+
+    private Vector3 climbWallNormal;
+
+    private float halfHeight => characterController.height * 0.5f;
+    private bool IsSneaking => playerInputHandler != null && playerInputHandler.CrouchTriggered;
+    private bool SprintInput => playerInputHandler != null && playerInputHandler.SprintTriggered;
+    private bool IsMoving => playerInputHandler != null && playerInputHandler.MovementInput.sqrMagnitude > 0.01f;
+    private bool IsSprinting => stamina != null && stamina.IsSprinting;
+
+    private float CurrentSpeed
+    {
+        get
+        {
+            if (IsSneaking) return walkSpeed * sneakMultiplier;
+            if (IsSprinting) return walkSpeed * sprintMultiplier;
+            return walkSpeed;
+        }
+    }
 
     void Start()
     {
@@ -31,24 +64,156 @@ public class PlayerModel : MonoBehaviour
 
     private void Update()
     {
+        HandleSprinting();
         HandleMovement();
         HandleRotation();
     }
 
+    private void HandleSprinting()
+    {
+        if (stamina == null) return;
+        bool wantsToSprint = SprintInput && IsMoving && !IsSneaking;
+        stamina.SetSprinting(wantsToSprint);
+    }
+
     private Vector3 CalculateWorldDirection()
     {
-        Vector3 inputDirection = new Vector3(playerInputHandler.MovementInput.x, 0, playerInputHandler.MovementInput.y);
-        return transform.TransformDirection(inputDirection).normalized;
+        Vector3 input = new Vector3(playerInputHandler.MovementInput.x, 0, playerInputHandler.MovementInput.y);
+        return transform.TransformDirection(input).normalized;
+    }
+
+    private Vector3 HorizontalForward()
+    {
+        Vector3 f = transform.forward;
+        f.y = 0f;
+        return f.normalized;
+    }
+
+    private bool CheckWallAhead(out RaycastHit hit)
+    {
+        Vector3 origin = transform.position + Vector3.up * halfHeight * 0.5f;
+        return Physics.Raycast(origin, HorizontalForward(), out hit, climbCheckDistance, climbableLayers);
+    }
+
+    private bool CheckClimbWall(out RaycastHit hit)
+    {
+        Vector3 origin = transform.position + Vector3.up * halfHeight * 0.5f;
+        return Physics.Raycast(origin, -climbWallNormal, out hit, climbCheckDistance, climbableLayers);
+    }
+
+    private bool WallIsClimbHeight(RaycastHit hit)
+    {
+        float wallTop = hit.collider.bounds.max.y;
+        float playerTop = transform.position.y + characterController.height;
+        return wallTop > transform.position.y + 0.1f && wallTop < playerTop + characterController.height;
+    }
+
+    private void HandleClimbing()
+    {
+        bool jumpHeld = playerInputHandler != null && playerInputHandler.JumpTriggered;
+        bool jumpJustPressed = jumpHeld && !wasJumpHeld;
+        wasJumpHeld = jumpHeld;
+
+        if (!isClimbing)
+        {
+            if (!characterController.isGrounded && jumpHeld &&
+                CheckWallAhead(out RaycastHit hit) &&
+                WallIsClimbHeight(hit))
+            {
+                isClimbing = true;
+                climbWallNormal = hit.normal;
+                vaultUpApplied = false;
+                jumpConsumed = true;
+            }
+            return;
+        }
+
+        if (IsSneaking)
+        {
+            isClimbing = false;
+            vaulting = false;
+            vaultUpApplied = false;
+            return;
+        }
+
+        if (stamina != null && (stamina.IsExhausted || stamina.CurrentStamina <= 0f))
+        {
+            isClimbing = false;
+            vaulting = false;
+            vaultUpApplied = false;
+            return;
+        }
+
+        bool wallPresent = CheckClimbWall(out _);
+
+        if (!wallPresent && !vaulting)
+        {
+            vaulting = true;
+            vaultUpApplied = false;
+        }
+
+        if (vaulting)
+        {
+            if (!vaultUpApplied)
+            {
+                currentMovement.y = climbStepForce * 1.5f;
+                vaultUpApplied = true;
+                if (stamina != null)
+                    stamina.UseStamina(jumpStaminaCost);
+            }
+
+            Vector3 fwd = HorizontalForward();
+            currentMovement.x = fwd.x * walkSpeed;
+            currentMovement.z = fwd.z * walkSpeed;
+
+            currentMovement.y += Physics.gravity.y * gravityMultiplayer * Time.deltaTime;
+
+            if (characterController.isGrounded && currentMovement.y <= 0f)
+            {
+                isClimbing = false;
+                vaulting = false;
+                vaultUpApplied = false;
+            }
+            return;
+        }
+
+        currentMovement.y = jumpJustPressed ? climbStepForce : Mathf.Lerp(currentMovement.y, 0f, 10f * Time.deltaTime);
+        if (jumpJustPressed && stamina != null)
+            stamina.UseStamina(jumpStaminaCost);
+
+        currentMovement.y += Physics.gravity.y * climbHoldGravityScale * Time.deltaTime;
+
+        if (characterController.isGrounded && currentMovement.y < 0f)
+        {
+            isClimbing = false;
+            vaulting = false;
+            vaultUpApplied = false;
+        }
     }
 
     private void HandleJumping()
     {
+        if (isClimbing) return;
+
+        bool jumpHeld = playerInputHandler != null && playerInputHandler.JumpTriggered;
+
+        if (!jumpHeld)
+            jumpConsumed = false;
+
         if (characterController.isGrounded)
         {
             currentMovement.y = -0.5f;
 
-            if (playerInputHandler.JumpTriggered)
+            if (jumpHeld && !jumpConsumed && (stamina == null || stamina.HasStaminaForJump))
+            {
                 currentMovement.y = jumpForce;
+                jumpConsumed = true;
+                if (stamina != null)
+                {
+                    stamina.UseStamina(jumpStaminaCost);
+                    stamina.SetSprinting(false);
+                }
+            }
         }
         else
         {
@@ -58,22 +223,25 @@ public class PlayerModel : MonoBehaviour
 
     private void HandleMovement()
     {
-        Vector3 worldDirection = CalculateWorldDirection();
-        currentMovement.x = worldDirection.x * CurrentSpeed;
-        currentMovement.z = worldDirection.z * CurrentSpeed;
+        Vector3 dir = CalculateWorldDirection();
 
+        currentMovement.x = dir.x * CurrentSpeed;
+        currentMovement.z = dir.z * CurrentSpeed;
+
+        HandleClimbing();
         HandleJumping();
+
         characterController.Move(currentMovement * Time.deltaTime);
     }
 
-    private void ApplyHorizontalRotation(float rotationAmount)
+    private void ApplyHorizontalRotation(float rot)
     {
-        transform.Rotate(0, rotationAmount, 0);
+        transform.Rotate(0, rot, 0);
     }
 
-    private void ApplyVerticalRotation(float rotationAmount)
+    private void ApplyVerticalRotation(float rot)
     {
-        verticalRotation = Mathf.Clamp(verticalRotation - rotationAmount, -upDownLookRange, upDownLookRange);
+        verticalRotation = Mathf.Clamp(verticalRotation - rot, -upDownLookRange, upDownLookRange);
         mainCamera.transform.localRotation = Quaternion.Euler(verticalRotation, 0, 0);
     }
 
@@ -81,10 +249,10 @@ public class PlayerModel : MonoBehaviour
     {
         if (Cursor.lockState != CursorLockMode.Locked) return;
 
-        float mouseXRotation = playerInputHandler.RotationInput.x * mouseSensitivity;
-        float mouseYRotation = playerInputHandler.RotationInput.y * mouseSensitivity;
+        float mx = playerInputHandler.RotationInput.x * mouseSensitivity;
+        float my = playerInputHandler.RotationInput.y * mouseSensitivity;
 
-        ApplyHorizontalRotation(mouseXRotation);
-        ApplyVerticalRotation(mouseYRotation);
+        ApplyHorizontalRotation(mx);
+        ApplyVerticalRotation(my);
     }
 }
