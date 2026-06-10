@@ -42,8 +42,8 @@ public class AnimReach : MonoBehaviour
     float currentSlow = 1f;
     float baseWalkSpeed;
     public bool IsInSlowZone { get; private set; }
-
     public bool IsSlowed => currentSlow < 1f;
+    public float CurrentSlowAmount => currentSlow;
 
     enum AttackPhase { Idle, Attack }
     AttackPhase phase = AttackPhase.Idle;
@@ -149,8 +149,8 @@ public class AnimReach : MonoBehaviour
         t.isStubChain = chain.Count <= 3;
         t.perBoneAngle = t.isStubChain ? 90f : Mathf.Clamp(maxBendAngle * (5f / Mathf.Max(chain.Count, 1)), 15f, 90f);
         t.chainBoneSpeed = boneSpeed * Mathf.Lerp(1.5f, 1f, Mathf.Clamp01((float)chain.Count / 8f));
-        t.orbitSpeed = Random.Range(2f, 8f);
-        t.spreadOffset = Random.Range(0.8f, 1.2f);
+        t.orbitSpeed = Random.Range(0.5f, 4f);
+        t.spreadOffset = Random.Range(0.4f, 2.2f);
 
         for (int i = 0; i < chain.Count; i++)
         {
@@ -264,11 +264,7 @@ public class AnimReach : MonoBehaviour
                 + spreadAxis * (orbitRadius * t.spreadOffset * 0.5f)
                 - approachDir * orbitRadius * t.spreadOffset * 0.3f;
 
-            goal = PushOutOfBox(goal);
-            goal.y = Mathf.Max(goal.y, origin.y);
-
             t.ikTarget = Vector3.Lerp(t.ikTarget, goal, reachSpeed * Time.deltaTime);
-            t.ikTarget.y = Mathf.Max(t.ikTarget.y, origin.y);
         }
         else
         {
@@ -307,7 +303,7 @@ public class AnimReach : MonoBehaviour
             float frac = (float)(i + 1) / n;
             float curved = frac * frac;
             Vector3 sub = root + totalDirNorm * (totalDist * curved);
-            subTargets[i] = inReach ? PushOutOfBox(sub) : sub;
+            subTargets[i] = sub;
             subTargets[i].y = Mathf.Max(subTargets[i].y, root.y);
         }
 
@@ -360,7 +356,7 @@ public class AnimReach : MonoBehaviour
         if (inReach)
         {
             t.touchingPlayer = false;
-            PushBonesOutOfBox(t);
+            CheckTouchOnly(t);
             if (t.touchingPlayer) touchCount++;
         }
     }
@@ -394,7 +390,7 @@ public class AnimReach : MonoBehaviour
         }
     }
 
-    void PushBonesOutOfBox(Tentacle t)
+    void CheckTouchOnly(Tentacle t)
     {
         if (playerBox == null) return;
 
@@ -406,29 +402,6 @@ public class AnimReach : MonoBehaviour
             if ((closest - t.bones[i].position).sqrMagnitude < skinThickness * skinThickness)
                 t.touchingPlayer = true;
         }
-    }
-
-    Vector3 PushOutOfBox(Vector3 worldPoint)
-    {
-        if (playerBox == null) return worldPoint;
-
-        Vector3 local = playerBox.transform.InverseTransformPoint(worldPoint) - playerBox.center;
-        Vector3 halfSize = playerBox.size * 0.5f + Vector3.one * skinThickness;
-
-        if (Mathf.Abs(local.x) < halfSize.x &&
-            Mathf.Abs(local.y) < halfSize.y &&
-            Mathf.Abs(local.z) < halfSize.z)
-        {
-            float dx = halfSize.x - Mathf.Abs(local.x);
-            float dy = halfSize.y - Mathf.Abs(local.y);
-            float dz = halfSize.z - Mathf.Abs(local.z);
-
-            if (dx < dy && dx < dz) local.x = halfSize.x * Mathf.Sign(local.x);
-            else if (dy < dz) local.y = halfSize.y * Mathf.Sign(local.y);
-            else local.z = halfSize.z * Mathf.Sign(local.z);
-        }
-
-        return playerBox.transform.TransformPoint(local + playerBox.center);
     }
 
     bool IsNaNQ(Quaternion q) =>

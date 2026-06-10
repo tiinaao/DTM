@@ -10,7 +10,7 @@ public class PlayerModel : MonoBehaviour
     [Header("Jump Parameters")]
     [SerializeField] private float jumpForce = 8.5f;
     [SerializeField] private float gravityMultiplayer = 2.0f;
-    [SerializeField] private float jumpStaminaCost = 0.1f;
+    [SerializeField] private float jumpStaminaCost = 0.2f;
 
     [Header("Look Parameters")]
     [SerializeField] private float mouseSensitivity = 0.2f;
@@ -29,16 +29,16 @@ public class PlayerModel : MonoBehaviour
     [SerializeField] private Stamina stamina;
     [SerializeField] private AnimReach animReach;
 
+    private Vector3 climbWallNormal;
     private Vector3 currentMovement;
     private float verticalRotation;
-
     private bool isClimbing;
     private bool wasJumpHeld;
     private bool vaulting;
     private bool vaultUpApplied;
     private bool jumpConsumed;
-
-    private Vector3 climbWallNormal;
+    private float climbWallLostTimer = 0f;
+    private const float climbWallGrace = 0.12f;
 
     private float halfHeight => characterController.height * 0.5f;
     private bool IsSneaking => playerInputHandler != null && playerInputHandler.CrouchTriggered;
@@ -108,6 +108,15 @@ public class PlayerModel : MonoBehaviour
         return wallTop > transform.position.y + 0.1f && wallTop < playerTop + characterController.height;
     }
 
+    private bool CheckVaultable()
+    {
+        Vector3 fwd = -climbWallNormal;
+        fwd.y = 0f;
+        fwd.Normalize();
+        Vector3 overWallPos = transform.position + fwd * climbCheckDistance * 1.5f + Vector3.up * characterController.height;
+        return Physics.Raycast(overWallPos, Vector3.down, characterController.height * 1.5f, climbableLayers);
+    }
+
     private void HandleClimbing()
     {
         bool jumpHeld = playerInputHandler != null && playerInputHandler.JumpTriggered;
@@ -133,6 +142,7 @@ public class PlayerModel : MonoBehaviour
             isClimbing = false;
             vaulting = false;
             vaultUpApplied = false;
+            climbWallLostTimer = 0f;
             return;
         }
 
@@ -141,15 +151,44 @@ public class PlayerModel : MonoBehaviour
             isClimbing = false;
             vaulting = false;
             vaultUpApplied = false;
+            climbWallLostTimer = 0f;
             return;
         }
 
         bool wallPresent = CheckClimbWall(out _);
 
+        if (!wallPresent)
+        {
+            Vector3 right = Vector3.Cross(climbWallNormal, Vector3.up).normalized;
+            Vector3 origin = transform.position + Vector3.up * halfHeight * 0.5f;
+            bool leftHit = Physics.Raycast(origin - right * 0.2f, -climbWallNormal, climbCheckDistance, climbableLayers);
+            bool rightHit = Physics.Raycast(origin + right * 0.2f, -climbWallNormal, climbCheckDistance, climbableLayers);
+            if (leftHit || rightHit)
+                wallPresent = true;
+        }
+
         if (!wallPresent && !vaulting)
         {
-            vaulting = true;
-            vaultUpApplied = false;
+            climbWallLostTimer += Time.deltaTime;
+            if (climbWallLostTimer >= climbWallGrace)
+            {
+                climbWallLostTimer = 0f;
+                if (CheckVaultable())
+                {
+                    vaulting = true;
+                    vaultUpApplied = false;
+                }
+                else
+                {
+                    isClimbing = false;
+                    vaulting = false;
+                    vaultUpApplied = false;
+                }
+            }
+        }
+        else if (wallPresent)
+        {
+            climbWallLostTimer = 0f;
         }
 
         if (vaulting)
@@ -162,7 +201,9 @@ public class PlayerModel : MonoBehaviour
                     stamina.UseStamina(jumpStaminaCost);
             }
 
-            Vector3 fwd = HorizontalForward();
+            Vector3 fwd = -climbWallNormal;
+            fwd.y = 0f;
+            fwd.Normalize();
             currentMovement.x = fwd.x * walkSpeed;
             currentMovement.z = fwd.z * walkSpeed;
 
@@ -173,6 +214,7 @@ public class PlayerModel : MonoBehaviour
                 isClimbing = false;
                 vaulting = false;
                 vaultUpApplied = false;
+                climbWallLostTimer = 0f;
             }
             return;
         }
@@ -188,6 +230,7 @@ public class PlayerModel : MonoBehaviour
             isClimbing = false;
             vaulting = false;
             vaultUpApplied = false;
+            climbWallLostTimer = 0f;
         }
     }
 

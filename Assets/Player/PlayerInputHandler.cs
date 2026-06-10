@@ -63,18 +63,11 @@ public class PlayerInputHandler : MonoBehaviour
         crouchAction.canceled += InputInfo => CrouchTriggered = false;
     }
 
-    private void OnEnable()
-    {
-        playerControls.FindActionMap(actionMapName).Enable();
-    }
-
-    private void OnDisable()
-    {
-        playerControls.FindActionMap(actionMapName).Disable();
-    }
+    private bool inputManuallyDisabled = false;
 
     public void DisableInput()
     {
+        inputManuallyDisabled = true;
         playerControls.FindActionMap(actionMapName).Disable();
         MovementInput = Vector2.zero;
         RotationInput = Vector2.zero;
@@ -85,6 +78,18 @@ public class PlayerInputHandler : MonoBehaviour
 
     public void EnableInput()
     {
+        inputManuallyDisabled = false;
         playerControls.FindActionMap(actionMapName).Enable();
+    }
+
+    private void OnEnable()
+    {
+        if (!inputManuallyDisabled)
+            playerControls.FindActionMap(actionMapName).Enable();
+    }
+
+    private void OnDisable()
+    {
+        playerControls.FindActionMap(actionMapName).Disable();
     }
 }
