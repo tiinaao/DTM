@@ -279,7 +279,7 @@ public class AnimReach : MonoBehaviour
                     t.ikLocalRot[i] = Quaternion.Slerp(t.ikLocalRot[i], t.restLocalRot[i], returnSpeed * Time.deltaTime);
 
                 float tipDist = Vector3.Distance(t.bones[n - 1].position, restWorld);
-                if (tipDist < 0.25f) t.settled = true;
+                if (tipDist < 0.5f) t.settled = true;
             }
 
             if (t.settled)

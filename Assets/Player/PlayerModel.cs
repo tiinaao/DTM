@@ -195,7 +195,7 @@ public class PlayerModel : MonoBehaviour
         {
             if (!vaultUpApplied)
             {
-                currentMovement.y = climbStepForce * 1.5f;
+                currentMovement.y = climbStepForce * 1f;
                 vaultUpApplied = true;
                 if (stamina != null)
                     stamina.UseStamina(jumpStaminaCost);
