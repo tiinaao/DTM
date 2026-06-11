@@ -5,9 +5,9 @@ public class ScreenBlurController : MonoBehaviour
 {
     public AnimReach animReach;
 
-    [Range(2f, 30f)] public float interval = 8f;
-    [Range(0.1f, 3f)] public float duration = 0.6f;
-    [Range(0f, 1f)] public float maxBlur = 0.8f;
+    [Range(1f, 5f)] public float interval = 1.5f;
+    [Range(0.1f, 3f)] public float duration = 1f;
+    [Range(0f, 5f)] public float maxBlur = 2.5f;
 
     void Start()
     {
