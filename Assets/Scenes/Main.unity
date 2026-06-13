@@ -1154,7 +1154,7 @@ MonoBehaviour:
   startNode: Start
   dialogueRunnerHelper: {fileID: 864456136}
   objectsToHideDuringDialogue:
-  - {fileID: 0}
+  - {fileID: 1423543465}
   - {fileID: 1518834575}
   fadeDuration: 0.25
 --- !u!4 &313665059
@@ -1772,7 +1772,7 @@ Transform:
   m_GameObject: {fileID: 512250410}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -0.5}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3606,8 +3606,8 @@ MonoBehaviour:
   startNode: Start
   dialogueRunnerHelper: {fileID: 864456136}
   objectsToHideDuringDialogue:
-  - {fileID: 0}
   - {fileID: 1518834575}
+  - {fileID: 1423543465}
   fadeDuration: 0.25
 --- !u!1 &1344825872
 GameObject:
