@@ -14,6 +14,10 @@ public class PlayerInputHandler : MonoBehaviour
     [SerializeField] private string interact = "Interact";
     [SerializeField] private string esc = "Esc";
     [SerializeField] private string crouch = "Crouch";
+    [SerializeField] private string inventory = "Inventory";
+    [SerializeField] private string useL = "Use_L";
+    [SerializeField] private string useR = "Use_R";
+    [SerializeField] private string scroll = "Scroll";
 
     private InputAction movementAction;
     private InputAction rotationAction;
@@ -22,14 +26,22 @@ public class PlayerInputHandler : MonoBehaviour
     private InputAction interactAction;
     private InputAction escAction;
     private InputAction crouchAction;
+    private InputAction inventoryAction;
+    private InputAction useLAction;
+    private InputAction useRAction;
+    private InputAction scrollAction;
 
     public Vector2 MovementInput { get; private set; }
     public Vector2 RotationInput { get; private set; }
     public bool JumpTriggered { get; private set; }
     public bool SprintTriggered { get; private set; }
     public bool CrouchTriggered { get; private set; }
+    public float ScrollInput { get; private set; }
     public bool InteractTriggered => interactAction.WasPressedThisFrame();
     public bool EscTriggered => escAction.WasPressedThisFrame();
+    public bool InventoryTriggered => inventoryAction.WasPressedThisFrame();
+    public bool UseLTriggered => useLAction.WasPressedThisFrame();
+    public bool UseRTriggered => useRAction.WasPressedThisFrame();
 
     private void Awake()
     {
@@ -41,6 +53,10 @@ public class PlayerInputHandler : MonoBehaviour
         interactAction = actionMap.FindAction(interact);
         escAction = actionMap.FindAction(esc);
         crouchAction = actionMap.FindAction(crouch);
+        inventoryAction = actionMap.FindAction(inventory);
+        useLAction = actionMap.FindAction(useL);
+        useRAction = actionMap.FindAction(useR);
+        scrollAction = actionMap.FindAction(scroll);
 
         SubscribeActionValueToInputEvent();
     }
@@ -63,6 +79,11 @@ public class PlayerInputHandler : MonoBehaviour
         crouchAction.canceled += InputInfo => CrouchTriggered = false;
     }
 
+    private void LateUpdate()
+    {
+        ScrollInput = scrollAction.ReadValue<Vector2>().y;
+    }
+
     private bool inputManuallyDisabled = false;
 
     public void DisableInput()
@@ -74,6 +95,7 @@ public class PlayerInputHandler : MonoBehaviour
         JumpTriggered = false;
         SprintTriggered = false;
         CrouchTriggered = false;
+        ScrollInput = 0f;
     }
 
     public void EnableInput()

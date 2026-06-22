@@ -10,11 +10,18 @@ public class InteractPrompt : MonoBehaviour
 
     private Camera mainCamera;
     private DialogueTrigger currentTrigger;
+    private ItemPickup currentPickup;
+
+    private int outlineLayer;
+    private int interactableLayer;
 
     void Start()
     {
         mainCamera = GetComponent<Camera>();
         promptUI.SetActive(false);
+
+        outlineLayer = LayerMask.NameToLayer("Outline");
+        interactableLayer = LayerMask.NameToLayer("Interactable");
     }
 
     void Update()
@@ -23,7 +30,9 @@ public class InteractPrompt : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, 3f))
         {
-            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Outline"))
+            int hitLayer = hit.collider.gameObject.layer;
+
+            if (hitLayer == outlineLayer || hitLayer == interactableLayer)
             {
                 promptUI.SetActive(true);
                 promptUI.transform.position = hit.collider.transform.position + offset;
@@ -31,9 +40,15 @@ public class InteractPrompt : MonoBehaviour
                 promptUI.transform.Rotate(0, 180, 0);
 
                 currentTrigger = hit.collider.GetComponent<DialogueTrigger>();
+                currentPickup = hit.collider.GetComponent<ItemPickup>();
 
-                if (playerInputHandler.InteractTriggered && currentTrigger != null)
-                    currentTrigger.TriggerDialogue();
+                if (playerInputHandler.InteractTriggered)
+                {
+                    if (currentTrigger != null)
+                        currentTrigger.TriggerDialogue();
+                    else if (currentPickup != null)
+                        currentPickup.GiveItem();
+                }
             }
             else
             {
@@ -50,5 +65,6 @@ public class InteractPrompt : MonoBehaviour
     {
         promptUI.SetActive(false);
         currentTrigger = null;
+        currentPickup = null;
     }
 }

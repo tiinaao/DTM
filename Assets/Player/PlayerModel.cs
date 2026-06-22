@@ -27,6 +27,7 @@ public class PlayerModel : MonoBehaviour
     [SerializeField] private Camera mainCamera;
     [SerializeField] private PlayerInputHandler playerInputHandler;
     [SerializeField] private Stamina stamina;
+    [SerializeField] private Health health;
     [SerializeField] private AnimReach animReach;
 
     private Vector3 climbWallNormal;
@@ -275,6 +276,9 @@ public class PlayerModel : MonoBehaviour
         HandleJumping();
 
         characterController.Move(currentMovement * Time.deltaTime);
+
+        if (health != null)
+            health.CheckFallDamage(characterController.isGrounded, transform.position.y);
     }
 
     private void ApplyHorizontalRotation(float rot)

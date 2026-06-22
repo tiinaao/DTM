@@ -1,6 +1,1 @@
-# CONTROLS
-- Move – WASD
-- Jump / Climb – Space
-- Crouch / Stop climbing – Shift
-- Sprint – Ctrl
-- Pause menu – Esc
+> Please read through the files in the `!DOCS/` folder — it contains manuals for the reusable systems and components used in the project. It's kept up to date as the project grows so check back if something's unclear!

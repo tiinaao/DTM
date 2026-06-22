@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fb4e614ab0b3a341a9a7ac2c61deca2, type: 3}
+  m_Name: Knife
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeWeaponItem
+  itemId: knife_1
+  itemName: Knife
+  description: Hyper realistic knife.
+  icon: {fileID: 21300000, guid: e9a62a57ca29efc4c9a2878448fb20c9, type: 3}
+  category: 1
+  isStackable: 0
+  maxStack: 1
+  isEquippable: 1
+  damage: 5

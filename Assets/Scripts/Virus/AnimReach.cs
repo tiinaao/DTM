@@ -379,7 +379,9 @@ public class AnimReach : MonoBehaviour
             float swayAng = Mathf.Sin(st + i * 0.5f) * swayAmount * frac * 18f;
             Quaternion sway = Quaternion.AngleAxis(swayAng, stableRight);
 
-            Quaternion result = t.restLocalRot[i] * sway;
+            Quaternion target = t.restLocalRot[i] * sway;
+
+            Quaternion result = Quaternion.Slerp(t.ikLocalRot[i], target, returnSpeed * Time.deltaTime);
 
             if (IsNaNQ(result)) continue;
 

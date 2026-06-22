@@ -1,0 +1,17 @@
+/* Bold */
+.markdown-preview-view strong,
+.cm-s-obsidian .cm-strong {
+    color: #30D5C8;
+}
+
+/* Italic */
+.markdown-preview-view em,
+.cm-s-obsidian .cm-em {
+    color: #FF66CC;
+}
+
+/* Bold + Italic */
+.markdown-preview-view strong em,
+.cm-s-obsidian .cm-strong.cm-em {
+    color: #FF9E80;
+}
