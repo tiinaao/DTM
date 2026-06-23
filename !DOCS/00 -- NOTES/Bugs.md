@@ -1,0 +1,2 @@
+- **Yarn Spinner:** *The type or namespace name 'Dictionary<,>' could not be found.*
+	- **Fix:** Double click the error to open the file, and put `using System.Collections.Generic;` after `using UnityEngine;`
