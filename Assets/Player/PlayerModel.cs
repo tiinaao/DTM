@@ -45,7 +45,7 @@ public class PlayerModel : MonoBehaviour
     private bool IsSneaking => playerInputHandler != null && playerInputHandler.CrouchTriggered;
     private bool SprintInput => playerInputHandler != null && playerInputHandler.SprintTriggered;
     private bool IsMoving => playerInputHandler != null && playerInputHandler.MovementInput.sqrMagnitude > 0.01f;
-    private bool IsSprinting => stamina != null && stamina.IsSprinting;
+    public bool IsSprinting => stamina != null && stamina.IsSprinting;
 
     private float CurrentSpeed
     {
