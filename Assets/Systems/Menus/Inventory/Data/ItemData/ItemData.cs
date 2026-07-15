@@ -11,7 +11,8 @@ public enum ItemCategory
 [CreateAssetMenu(fileName = "NewItem", menuName = "Inventory/Item")]
 public class ItemData : ScriptableObject
 {
-    public string itemId;
+    public string itemId => itemName.ToLower().Replace(" ", "_");
+
     public string itemName;
     [TextArea] public string description;
     public Sprite icon;

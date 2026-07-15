@@ -23,16 +23,15 @@ Navigate to `Assets/Systems/Menus/Inventory/Items/` and go into the correspondin
 
 Once the asset is created, fill in these fields in the Inspector:
 
-| Field          | Notes                                                                                                     |
-| -------------- | --------------------------------------------------------------------------------------------------------- |
-| `itemId`       | Must be unique across all items. Use the item name in plain text (e.g. `health_potion_1`, `rusty_knife`). |
-| `itemName`     | The display name shown in the inventory UI.                                                               |
-| `description`  | A short description of the item.                                                                          |
-| `icon`         | Drag your sprite here. See below for how to import icons correctly.                                       |
-| `category`     | Set to match the item type: Consumable, Weapon, Wearable, or Other.                                       |
-| `isStackable`  | Whether multiple of this item stack in one slot.                                                          |
-| `maxStack`     | Maximum stack size (default 99).                                                                          |
-| `isEquippable` | Whether the item can be equipped.                                                                         |
+| Field          | Notes                                                               |
+| -------------- | ------------------------------------------------------------------- |
+| `itemName`     | The display name shown in the inventory UI.                         |
+| `description`  | A short description of the item.                                    |
+| `icon`         | Drag your sprite here. See below for how to import icons correctly. |
+| `category`     | Set to match the item type: Consumable, Weapon, Wearable, or Other. |
+| `isStackable`  | Whether multiple of this item stack in one slot.                    |
+| `maxStack`     | Maximum stack size (default 99).                                    |
+| `isEquippable` | Whether the item can be equipped.                                   |
 ### Importing an Icon
 
 1. Drop the file into `Assets/Systems/Menus/Inventory/Items/Sprites/`.

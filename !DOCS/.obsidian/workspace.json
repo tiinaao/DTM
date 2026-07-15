@@ -69,12 +69,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "00 -- NOTES/Licenses.md",
+                "file": "licenses.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Licenses"
+              "title": "licenses"
             }
           }
         ],
@@ -240,14 +240,15 @@
       "bases:Create new base": false
     }
   },
-  "active": "bc97f8c73916e1c9",
+  "active": "957cf1646329a85c",
   "lastOpenFiles": [
-    "00 -- NOTES/Bugs.md",
-    "00 -- NOTES/Licenses.md",
-    "00 -- LICENSES",
-    "00 -- NOTES/Notes.md",
     "01 -- MANUALS/Inventory.md",
     "01 -- MANUALS/Chunks.md",
+    "00 -- NOTES/Bugs.md",
+    "00 -- NOTES/Notes.md",
+    "licenses.md",
+    "00 -- NOTES/Licenses.md",
+    "00 -- LICENSES",
     "00 -- NOTES",
     "01 -- MANUALS/Untitled",
     "01 -- MANUALS"
