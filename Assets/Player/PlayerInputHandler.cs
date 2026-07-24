@@ -4,20 +4,19 @@ using UnityEngine.InputSystem;
 public class PlayerInputHandler : MonoBehaviour
 {
     [SerializeField] private InputActionAsset playerControls;
-    [SerializeField] private string actionMapName = "Player";
 
-    [Header("Action Name References")]
-    [SerializeField] private string movement = "Movement";
-    [SerializeField] private string rotation = "Rotation";
-    [SerializeField] private string jump = "Jump";
-    [SerializeField] private string sprint = "Sprint";
-    [SerializeField] private string interact = "Interact";
-    [SerializeField] private string esc = "Esc";
-    [SerializeField] private string crouch = "Crouch";
-    [SerializeField] private string inventory = "Inventory";
-    [SerializeField] private string useL = "Use_L";
-    [SerializeField] private string useR = "Use_R";
-    [SerializeField] private string scroll = "Scroll";
+    private string actionMapName = "Player";
+    private string movement = "Movement";
+    private string rotation = "Rotation";
+    private string jump = "Jump";
+    private string sprint = "Sprint";
+    private string interact = "Interact";
+    private string esc = "Esc";
+    private string crouch = "Crouch";
+    private string inventory = "Inventory";
+    private string useL = "Use_L";
+    private string useR = "Use_R";
+    private string scroll = "Scroll";
 
     private InputAction movementAction;
     private InputAction rotationAction;
@@ -33,10 +32,12 @@ public class PlayerInputHandler : MonoBehaviour
 
     public Vector2 MovementInput { get; private set; }
     public Vector2 RotationInput { get; private set; }
+    private bool inputManuallyDisabled = false;
     public bool JumpTriggered { get; private set; }
     public bool SprintTriggered { get; private set; }
     public bool CrouchTriggered { get; private set; }
     public float ScrollInput { get; private set; }
+
     public bool InteractTriggered => interactAction.WasPressedThisFrame();
     public bool EscTriggered => escAction.WasPressedThisFrame();
     public bool InventoryTriggered => inventoryAction.WasPressedThisFrame();
@@ -46,6 +47,7 @@ public class PlayerInputHandler : MonoBehaviour
     private void Awake()
     {
         InputActionMap actionMap = playerControls.FindActionMap(actionMapName);
+
         movementAction = actionMap.FindAction(movement);
         rotationAction = actionMap.FindAction(rotation);
         jumpAction = actionMap.FindAction(jump);
@@ -83,8 +85,6 @@ public class PlayerInputHandler : MonoBehaviour
     {
         ScrollInput = scrollAction.ReadValue<Vector2>().y;
     }
-
-    private bool inputManuallyDisabled = false;
 
     public void DisableInput()
     {

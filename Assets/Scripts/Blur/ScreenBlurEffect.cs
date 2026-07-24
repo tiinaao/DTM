@@ -6,9 +6,9 @@ public class ScreenBlurEffect : MonoBehaviour
 {
     public AnimReach animReach;
 
-    [Range(2f, 30f)] public float interval = 8f;
-    [Range(0.1f, 3f)] public float duration = 0.6f;
-    [Range(0f, 1f)] public float maxBlur = 0.8f;
+    public float interval = 8f;
+    public float duration = 0.6f;
+    public float maxBlur = 0.8f;
 
     Material mat;
     float blurAmount = 0f;

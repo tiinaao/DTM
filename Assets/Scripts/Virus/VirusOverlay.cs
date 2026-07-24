@@ -11,8 +11,8 @@ public class VirusOverlay : MonoBehaviour
 
     [Header("Intensity")]
     public float maxIntensity = 0.6f;
-    [Range(0.1f, 10f)] public float fadeInDuration = 0.5f;
-    [Range(0.1f, 10f)] public float fadeOutDuration = 3f;
+    public float fadeInDuration = 0.5f;
+    public float fadeOutDuration = 3f;
 
     [Header("Colors")]
     public Color vignColorA = new Color(0.45f, 0.00f, 0.00f, 1f);
@@ -20,27 +20,28 @@ public class VirusOverlay : MonoBehaviour
     public Color vignColorDark = new Color(0.0f, 0.0f, 0.0f, 1f);
 
     [Header("Grain")]
-    [Range(0f, 1f)] public float grainStrength = 0.365f;
-    [Range(1f, 40f)] public float grainScale = 16.5f;
-    [Range(0f, 10f)] public float grainSpeed = 2.5f;
+    public float grainStrength = 0.365f;
+    public float grainScale = 16.5f;
+    public float grainSpeed = 2.5f;
 
     [Header("Shape")]
-    [Range(0f, 1f)] public float centerX = 0.478f;
-    [Range(0f, 1f)] public float centerY = 0.478f;
-    [Range(0.1f, 2f)] public float radiusX = 0.45f;
-    [Range(0.1f, 2f)] public float radiusY = 0.45f;
+    public float centerX = 0.478f;
+    public float centerY = 0.478f;
+    public float radiusX = 0.45f;
+    public float radiusY = 0.45f;
 
     [Header("Veins Properties")]
     public Texture2D veinsColour;
     public Texture2D veinsMaskMap1;
     public Texture2D veinsMaskMap2;
-    [Range(0f, 1f)] public float veinsprimaryContourSmoothness = 0.595f;
-    [Range(0f, 1f)] public float veinssecondaryContourSmoothness = 0.8f;
-    [Range(0f, 1f)] public float smoothnessOfMaterial = 0f;
-    [Range(0f, 2f)] public float emissionBrightness = 0.65f;
+
+    public float veinsprimaryContourSmoothness = 0.595f;
+    public float veinssecondaryContourSmoothness = 0.8f;
+    public float smoothnessOfMaterial = 0f;
+    public float emissionBrightness = 0.65f;
     public Color emissionColour = Color.red;
-    [Range(0f, 5f)] public float wiggleSpeed = 1f;
-    [Range(0f, 1f)] public float wiggleIntensity = 0.25f;
+    public float wiggleSpeed = 1f;
+    public float wiggleIntensity = 0.25f;
 
     RawImage rawImage;
     Material mat;

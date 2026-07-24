@@ -27,11 +27,13 @@ Once the asset is created, fill in these fields in the Inspector:
 | -------------- | ------------------------------------------------------------------- |
 | `itemName`     | The display name shown in the inventory UI.                         |
 | `description`  | A short description of the item.                                    |
-| `icon`         | Drag your sprite here. See below for how to import icons correctly. |
+| `icon`         | Drag your sprite here. See below for how to import them correctly.  |
 | `category`     | Set to match the item type: Consumable, Weapon, Wearable, or Other. |
 | `isStackable`  | Whether multiple of this item stack in one slot.                    |
 | `maxStack`     | Maximum stack size (default 99).                                    |
 | `isEquippable` | Whether the item can be equipped.                                   |
+> Item id is generated automatically from the `itemName`.
+
 ### Importing an Icon
 
 1. Drop the file into `Assets/Systems/Menus/Inventory/Items/Sprites/`.

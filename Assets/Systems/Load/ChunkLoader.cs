@@ -7,9 +7,9 @@ public class ChunkLoader : MonoBehaviour
     [SerializeField] GameObject player;
     [SerializeField] GameObject[] chunkParents;
 
-    [SerializeField] float activationDistance = 50f;
-    [SerializeField] float deactivationDistance = 50f;
-    [SerializeField] float checkInterval = 0.50f;
+    float activationDistance = 50f;
+    float deactivationDistance = 50f;
+    float checkInterval = 0.50f;
 
     private Vector3 playerPos;
     private Dictionary<GameObject, Bounds> chunkBounds = new Dictionary<GameObject, Bounds>();

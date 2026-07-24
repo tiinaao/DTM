@@ -2,20 +2,18 @@ using UnityEngine;
 
 public class CameraHeadBob : MonoBehaviour
 {
-    [Header("Bob Settings")]
-    [SerializeField] private float bobFrequency = 2.2f;
-    [SerializeField] private float bobAmplitude = 0.06f;
-    [SerializeField] private float swayAmplitude = 0.025f;
-    [SerializeField] private float smoothSpeed = 10f;
-    [SerializeField] private float sprintMultiplier = 1.4f;
-    [SerializeField] private float sneakMultiplier = 0.6f;
+    private float frequency = 2.2f;
+    private float amplitude = 0.06f;
+    private float swayAmplitude = 0.025f;
+    private float smoothSpeed = 10f;
+    private float sprintMultiplier = 1.4f;
+    private float sneakMultiplier = 0.6f;
 
-    [Header("References")]
     [SerializeField] private PlayerModel playerModel;
     [SerializeField] private PlayerInputHandler inputHandler;
 
     private Vector3 restPosition;
-    private float bobTimer;
+    private float Timer;
 
     void Start()
     {
@@ -30,25 +28,25 @@ public class CameraHeadBob : MonoBehaviour
 
         if (isMoving)
         {
-            float freq = bobFrequency;
+            float freq = frequency;
             if (isSprinting) freq *= sprintMultiplier;
             else if (isSneaking) freq *= sneakMultiplier;
 
-            bobTimer += Time.deltaTime * freq;
+            Timer += Time.deltaTime * freq;
 
-            float bobY = Mathf.Sin(bobTimer * Mathf.PI * 2f) * bobAmplitude;
-            float bobX = Mathf.Cos(bobTimer * Mathf.PI) * swayAmplitude;
-            float rollZ = Mathf.Sin(bobTimer * Mathf.PI * 2f) * swayAmplitude * 8f;
+            float Y = Mathf.Sin(Timer * Mathf.PI * 2f) * amplitude;
+            float X = Mathf.Cos(Timer * Mathf.PI) * swayAmplitude;
+            float Z = Mathf.Sin(Timer * Mathf.PI * 2f) * swayAmplitude * 8f;
 
-            Vector3 target = restPosition + new Vector3(bobX, bobY, 0f);
+            Vector3 target = restPosition + new Vector3(X, Y, 0f);
             transform.localPosition = Vector3.Lerp(transform.localPosition, target, Time.deltaTime * smoothSpeed);
 
-            Quaternion targetRot = Quaternion.Euler(0f, 0f, -rollZ);
+            Quaternion targetRot = Quaternion.Euler(0f, 0f, -Z);
             transform.localRotation = Quaternion.Slerp(transform.localRotation, targetRot, Time.deltaTime * smoothSpeed);
         }
         else
         {
-            bobTimer = 0f;
+            Timer = 0f;
             transform.localPosition = Vector3.Lerp(transform.localPosition, restPosition, Time.deltaTime * smoothSpeed);
             transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.identity, Time.deltaTime * smoothSpeed);
         }

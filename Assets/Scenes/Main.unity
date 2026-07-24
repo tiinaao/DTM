@@ -3802,8 +3802,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d257052d689436249856e0cd085b3bc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraHeadBob
-  bobFrequency: 2.2
-  bobAmplitude: 0.06
+  frequency: 2.2
+  amplitude: 0.06
   swayAmplitude: 0.025
   smoothSpeed: 10
   sprintMultiplier: 1.4
@@ -12362,6 +12362,7 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 864456132}
   - {fileID: 752191872}
   - {fileID: 2094768786}
   - {fileID: 380359729}
@@ -12372,4 +12373,3 @@ SceneRoots:
   - {fileID: 724026010}
   - {fileID: 180218938}
   - {fileID: 2134510138}
-  - {fileID: 864456132}
