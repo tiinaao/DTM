@@ -16,7 +16,10 @@
  
 ## -- Tips & Reminders
 
-- If you use any editor plugins such as editor themes, please omit them from the repository by adding them to `.gitignore`.
-- Do not upload exported builds of the game into the repository.
+* Please do not push any commits into the `main` branch. All of your additions to the code should be done to the `shared` branch instead. The `main` branch will only receive occasional updates once a substantial amount of features have been implemented.
+* You can start looking around the project from the `main` scene.
+* If you use any editor plugins such as editor themes, please omit them from the repository by adding them to `.gitignore`.
+* Do not upload exported builds of the game into the repository.
 * Each time you run the project in the editor for the first time, you will see a bright blue screen for a few seconds while shaders compile. This is expected behaviour, the editor compiles shaders on demand, whereas packaged builds precompile them during the loading screen.
 * Sometimes restarting the editor clears certain errors, so try that if you're stuck with a bug.
+* Deleting the `Library/` folder is needed to regenerate packages.
