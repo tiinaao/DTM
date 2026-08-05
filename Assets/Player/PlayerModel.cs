@@ -59,6 +59,7 @@ public class PlayerModel : MonoBehaviour
 
     void Start()
     {
+        GameManager.Instance.Player = this;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -302,4 +303,26 @@ public class PlayerModel : MonoBehaviour
         ApplyHorizontalRotation(mx);
         ApplyVerticalRotation(my);
     }
+
+    public void Save(ref PlayerSaveData data)
+    {
+        data.position = transform.position;
+    }
+
+    public void Load(PlayerSaveData data)
+    {
+        if (characterController != null)
+            characterController.enabled = false;
+
+        transform.position = data.position;
+
+        if (characterController != null)
+            characterController.enabled = true;
+    }
+}
+
+[System.Serializable]
+public struct PlayerSaveData
+{
+    public Vector3 position;
 }

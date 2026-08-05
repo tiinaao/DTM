@@ -26,7 +26,7 @@ public class Health : MonoBehaviour
 
     private void Awake()
     {
-        Instance = this;
+        GameManager.Instance.Health = this;
 
         if (slider != null)
         {
@@ -109,4 +109,21 @@ public class Health : MonoBehaviour
             yield return null;
         }
     }
+
+    public void Save(ref HealthSaveData data)
+    {
+        data.currentHealth = CurrentValue;
+    }
+
+    public void Load(HealthSaveData data)
+    {
+        if (slider != null)
+            slider.value = data.currentHealth;
+    }
+}
+
+[System.Serializable]
+public struct HealthSaveData
+{
+    public float currentHealth;
 }

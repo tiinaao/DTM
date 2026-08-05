@@ -20,26 +20,26 @@ public class EquipmentSystem : MonoBehaviour
 
     private void Start()
     {
-        InventorySystem.Instance.OnInventoryChanged += CheckEquippedItems;
+        GameManager.Instance.Inventory.OnInventoryChanged += CheckEquippedItems;
     }
 
     private void OnDestroy()
     {
-        if (InventorySystem.Instance != null)
-            InventorySystem.Instance.OnInventoryChanged -= CheckEquippedItems;
+        if (GameManager.Instance.Inventory != null)
+            GameManager.Instance.Inventory.OnInventoryChanged -= CheckEquippedItems;
     }
 
     private void CheckEquippedItems()
     {
         bool changed = false;
 
-        if (equippedWeaponPrimary != null && !InventorySystem.Instance.HasItem(equippedWeaponPrimary.itemId))
+        if (equippedWeaponPrimary != null && !GameManager.Instance.Inventory.HasItem(equippedWeaponPrimary.itemId))
         {
             equippedWeaponPrimary = null;
             changed = true;
         }
 
-        if (equippedWeaponSecondary != null && !InventorySystem.Instance.HasItem(equippedWeaponSecondary.itemId))
+        if (equippedWeaponSecondary != null && !GameManager.Instance.Inventory.HasItem(equippedWeaponSecondary.itemId))
         {
             equippedWeaponSecondary = null;
             changed = true;

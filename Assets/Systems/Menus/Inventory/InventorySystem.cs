@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class InventorySystem : MonoBehaviour
 {
-    public static InventorySystem Instance { get; private set; }
-
     [SerializeField] private ItemDatabase itemDatabase;
 
     public List<InventoryItem> consumables = new List<InventoryItem>();
@@ -17,7 +15,7 @@ public class InventorySystem : MonoBehaviour
 
     private void Awake()
     {
-        Instance = this;
+        GameManager.Instance.Inventory = this;
         itemDatabase.Initialize();
     }
 
@@ -89,5 +87,65 @@ public class InventorySystem : MonoBehaviour
             if (found != null) return found;
         }
         return null;
+    }
+
+    [System.Serializable]
+    public struct SavedItemStack
+    {
+        public string itemId;
+        public int quantity;
+
+        public SavedItemStack(string itemId, int quantity)
+        {
+            this.itemId = itemId;
+            this.quantity = quantity;
+        }
+    }
+
+    [System.Serializable]
+    public struct InventorySaveData
+    {
+        public List<SavedItemStack> consumables;
+        public List<SavedItemStack> weapons;
+        public List<SavedItemStack> wearables;
+        public List<SavedItemStack> others;
+    }
+
+    public void Save(ref InventorySaveData data)
+    {
+        data.consumables = ToSaveList(consumables);
+        data.weapons = ToSaveList(weapons);
+        data.wearables = ToSaveList(wearables);
+        data.others = ToSaveList(others);
+    }
+
+    public void Load(InventorySaveData data)
+    {
+        consumables.Clear();
+        weapons.Clear();
+        wearables.Clear();
+        others.Clear();
+
+        FromSaveList(data.consumables);
+        FromSaveList(data.weapons);
+        FromSaveList(data.wearables);
+        FromSaveList(data.others);
+
+        OnInventoryChanged?.Invoke();
+    }
+
+    private List<SavedItemStack> ToSaveList(List<InventoryItem> items)
+    {
+        var result = new List<SavedItemStack>();
+        foreach (var item in items)
+            result.Add(new SavedItemStack(item.data.itemId, item.quantity));
+        return result;
+    }
+
+    private void FromSaveList(List<SavedItemStack> savedItems)
+    {
+        if (savedItems == null) return;
+        foreach (var saved in savedItems)
+            AddItem(saved.itemId, saved.quantity);
     }
 }

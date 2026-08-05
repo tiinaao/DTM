@@ -17,7 +17,7 @@ public class ItemPickup : MonoBehaviour
         foreach (var entry in items)
         {
             if (entry.itemData != null)
-                InventorySystem.Instance.AddItem(entry.itemData.itemId, entry.amount);
+                GameManager.Instance.Inventory.AddItem(entry.itemData.itemId, entry.amount);
         }
     }
 }

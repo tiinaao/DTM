@@ -13,13 +13,11 @@ The `ChunkLoader` script sits on the **Player** GameObject. It activates and dea
 4. Expand the **Chunk Parents** list, increase the size by 1, and drag your new chunk GameObject into the new slot.
 
 ---
-
 ## Warmup System
 
 Unity compiles shaders on demand in the editor, which causes hitching the first time something renders. In exported builds this is handled by the warmup system, which pre-touches shaders, materials, textures, audio, and prefabs during the loading screen so they're ready before the player gets in. There are two components involved: a **global** one that runs once at startup, and a **per-chunk** one that runs as chunks are registered.
 
 ---
-
 ### Global Warmup (`GlobalWarmupComponent`)
 
 Already set up on the **WarmupManager** GameObject, it handles:
@@ -29,7 +27,6 @@ Already set up on the **WarmupManager** GameObject, it handles:
 - **Textures** — same idea, global textures that aren't tied to a specific chunk.
 
 ---
-
 ### Per-Chunk Warmup (`ChunkWarmupComponent`)
 
 Each chunk that has unique assets should have a `ChunkWarmupComponent` attached to its root GameObject. 

@@ -13,6 +13,8 @@
 * **Pause Menu** – Esc
 * **Consumable Slots** – G / R (use consumable)
 * **Weapon Slots** – Mouse Wheel (switch weapon)
+* **Save** – F5
+* **Load** – F9
  
 ## -- Tips & Reminders
 

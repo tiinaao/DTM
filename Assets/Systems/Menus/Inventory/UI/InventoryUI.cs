@@ -28,7 +28,7 @@ public class InventoryUI : MonoBehaviour
 
     private void Start()
     {
-        InventorySystem.Instance.OnInventoryChanged += RefreshCurrentCategory;
+        GameManager.Instance.Inventory.OnInventoryChanged += RefreshCurrentCategory;
         EquipmentSystem.Instance.OnEquipmentChanged += RefreshDetailPanel;
         inventoryPanel.SetActive(false);
         detailPanel.SetActive(true);
@@ -40,8 +40,8 @@ public class InventoryUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (InventorySystem.Instance != null)
-            InventorySystem.Instance.OnInventoryChanged -= RefreshCurrentCategory;
+        if (GameManager.Instance.Inventory != null)
+            GameManager.Instance.Inventory.OnInventoryChanged -= RefreshCurrentCategory;
         if (EquipmentSystem.Instance != null)
             EquipmentSystem.Instance.OnEquipmentChanged -= RefreshDetailPanel;
     }
@@ -127,7 +127,7 @@ public class InventoryUI : MonoBehaviour
 
     private List<InventoryItem> GetListForCategory(ItemCategory category)
     {
-        var inv = InventorySystem.Instance;
+        var inv = GameManager.Instance.Inventory;
         switch (category)
         {
             case ItemCategory.Consumable: return inv.consumables;
@@ -207,6 +207,6 @@ public class InventoryUI : MonoBehaviour
                 EquipmentSystem.Instance.UnequipConsumable(data);
         }
 
-        InventorySystem.Instance.RemoveItem(data.itemId, quantity);
+        GameManager.Instance.Inventory.RemoveItem(data.itemId, quantity);
     }
 }

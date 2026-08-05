@@ -19,8 +19,8 @@ public class Quickslot : MonoBehaviour
         if (EquipmentSystem.Instance != null)
             EquipmentSystem.Instance.OnEquipmentChanged += Refresh;
 
-        if (InventorySystem.Instance != null)
-            InventorySystem.Instance.OnInventoryChanged += Refresh;
+        if (GameManager.Instance.Inventory != null)
+            GameManager.Instance.Inventory.OnInventoryChanged += Refresh;
 
         Refresh();
     }
@@ -30,8 +30,8 @@ public class Quickslot : MonoBehaviour
         if (EquipmentSystem.Instance != null)
             EquipmentSystem.Instance.OnEquipmentChanged -= Refresh;
 
-        if (InventorySystem.Instance != null)
-            InventorySystem.Instance.OnInventoryChanged -= Refresh;
+        if (GameManager.Instance.Inventory != null)
+            GameManager.Instance.Inventory.OnInventoryChanged -= Refresh;
     }
 
     private void Update()
@@ -82,12 +82,12 @@ public class Quickslot : MonoBehaviour
 
         string itemId = item.itemId;
 
-        if (!InventorySystem.Instance.HasItem(itemId)) return;
+        if (!GameManager.Instance.Inventory.HasItem(itemId)) return;
 
         item.Use();
-        InventorySystem.Instance.RemoveItem(itemId, 1);
+        GameManager.Instance.Inventory.RemoveItem(itemId, 1);
 
-        if (!InventorySystem.Instance.HasItem(itemId))
+        if (!GameManager.Instance.Inventory.HasItem(itemId))
         {
             if (slotType == SlotType.ConsumableR)
                 EquipmentSystem.Instance.UnequipConsumableBySlot(true);
@@ -129,7 +129,7 @@ public class Quickslot : MonoBehaviour
         icon.sprite = data.icon;
         icon.color = new Color(icon.color.r, icon.color.g, icon.color.b, 1f);
 
-        InventoryItem invItem = InventorySystem.Instance.FindItem(data.itemId);
+        InventoryItem invItem = GameManager.Instance.Inventory.FindItem(data.itemId);
         quantityText.text = (invItem != null && data.isStackable && invItem.quantity > 0)
             ? invItem.quantity.ToString("D2")
             : "";

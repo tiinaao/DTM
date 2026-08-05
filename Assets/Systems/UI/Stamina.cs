@@ -27,6 +27,8 @@ public class Stamina : MonoBehaviour
 
     private void Awake()
     {
+        GameManager.Instance.Stamina = this;
+
         if (slider != null)
         {
             slider.minValue = 0f;
@@ -141,4 +143,21 @@ public class Stamina : MonoBehaviour
             yield return null;
         }
     }
+
+    public void Save(ref StaminaSaveData data)
+    {
+        data.currentStamina = CurrentValue;
+    }
+
+    public void Load(StaminaSaveData data)
+    {
+        if (slider != null)
+            slider.value = data.currentStamina;
+    }
+}
+
+[System.Serializable]
+public struct StaminaSaveData
+{
+    public float currentStamina;
 }

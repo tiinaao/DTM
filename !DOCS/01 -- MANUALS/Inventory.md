@@ -1,8 +1,4 @@
 <hr>
-
-**Inventory folder path:** `Assets/Systems/Menus/Inventory/`  
-
----
 ## Creating a New Item
 
 Navigate to `Assets/Systems/Menus/Inventory/Items/` and go into the corresponding subfolder (e.g. `Consumables`, `Weapons`) or stay in `Items/` itself. **Right-click → Create → Inventory** and pick the item type that fits:
@@ -14,6 +10,7 @@ Navigate to `Assets/Systems/Menus/Inventory/Items/` and go into the correspondin
 | `FirearmWeapon` | Guns. Has `damage` and `magazineCapacity` fields.                                                               |
 | `MeleeWeapon`   | Melee weapons. Has a `damage` field.                                                                            |
 | `Wearable`      | Armour or clothing. Has a `damageReduction` field.                                                              |
+
 > You can also create your own item type by extending `ItemData`, make sure your class inherits from it so it pulls in all the required fields automatically. Reference the existing item scripts for how to do it, they can be found in `Inventory/Data/ItemData/`.
 
 > Do not create another `ItemDatabase`. There is one database that holds every item in the game, adding a second one will break lookups. 
