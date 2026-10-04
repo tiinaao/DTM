@@ -7,7 +7,7 @@ public class HealItem : ItemData
 
     public override void Use()
     {
-        Health h = Health.Instance;
+        Health h = GameManager.Instance.Health;
         if (h == null || h.IsFull()) return;
         h.Heal(healAmount);
     }

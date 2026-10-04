@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class InventorySystem : MonoBehaviour
 {
+    public const int Columns = 9;
+    public const int Rows = 3;
+    public const int MaxSlotsPerCategory = Columns * Rows;
+
     [SerializeField] private ItemDatabase itemDatabase;
 
     public List<InventoryItem> consumables = new List<InventoryItem>();
@@ -30,11 +34,25 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
-    public void AddItem(string itemId, int amount = 1)
+    public bool HasSpaceFor(string itemId)
     {
-        if (amount <= 0) return;
+        ItemData data = itemDatabase.GetItemById(itemId);
+        if (data == null) return false;
+
+        List<InventoryItem> list = GetListForCategory(data.category);
+
+        if (data.isStackable && list.Exists(i => i.data.itemId == itemId))
+            return true;
+
+        return list.Count < MaxSlotsPerCategory;
+    }
+
+    public bool AddItem(string itemId, int amount = 1)
+    {
+        if (amount <= 0) return false;
 
         ItemData data = itemDatabase.GetItemById(itemId);
+        if (data == null) return false;
 
         List<InventoryItem> list = GetListForCategory(data.category);
 
@@ -45,28 +63,34 @@ public class InventorySystem : MonoBehaviour
             {
                 existing.quantity = Mathf.Min(existing.quantity + amount, data.maxStack);
                 OnInventoryChanged?.Invoke();
-                return;
+                return true;
             }
         }
 
+        if (list.Count >= MaxSlotsPerCategory) return false;
+
         list.Add(new InventoryItem(data, amount));
         OnInventoryChanged?.Invoke();
+        return true;
     }
 
-    public void RemoveItem(string itemId, int amount = 1)
+    public bool RemoveItem(string itemId, int amount = 1)
     {
+        if (amount <= 0) return false;
+
         ItemData data = itemDatabase.GetItemById(itemId);
-        if (data == null) return;
+        if (data == null) return false;
 
         List<InventoryItem> list = GetListForCategory(data.category);
         InventoryItem existing = list.Find(i => i.data.itemId == itemId);
-        if (existing == null) return;
+        if (existing == null || existing.quantity < amount) return false;
 
         existing.quantity -= amount;
         if (existing.quantity <= 0)
             list.Remove(existing);
 
         OnInventoryChanged?.Invoke();
+        return true;
     }
 
     public bool HasItem(string itemId, int amount = 1)

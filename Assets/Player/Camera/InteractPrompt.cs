@@ -9,8 +9,9 @@ public class InteractPrompt : MonoBehaviour
     [SerializeField] private PlayerInputHandler playerInputHandler;
 
     private Camera mainCamera;
-    private DialogueTrigger currentTrigger;
     private ItemPickup currentPickup;
+    private DialogueTrigger currentDialogue;
+    private string defaultPromptText;
 
     private int outlineLayer;
     private int interactableLayer;
@@ -20,51 +21,72 @@ public class InteractPrompt : MonoBehaviour
         mainCamera = GetComponent<Camera>();
         promptUI.SetActive(false);
 
+        if (promptText != null) defaultPromptText = promptText.text;
+
         outlineLayer = LayerMask.NameToLayer("Outline");
         interactableLayer = LayerMask.NameToLayer("Interactable");
     }
 
     void Update()
     {
+        if (DialogueManager.IsDialogueActive)
+        {
+            ResetPrompt();
+            return;
+        }
+
         Ray ray = new Ray(transform.position, transform.forward);
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 3f))
+        if (!Physics.Raycast(ray, out RaycastHit hit, 3f))
         {
-            int hitLayer = hit.collider.gameObject.layer;
+            ResetPrompt();
+            return;
+        }
 
-            if (hitLayer == outlineLayer || hitLayer == interactableLayer)
+        int hitLayer = hit.collider.gameObject.layer;
+
+        if (hitLayer != outlineLayer && hitLayer != interactableLayer)
+        {
+            ResetPrompt();
+            return;
+        }
+
+        hit.collider.TryGetComponent(out currentDialogue);
+        hit.collider.TryGetComponent(out currentPickup);
+
+        if (currentDialogue == null && currentPickup == null)
+        {
+            ResetPrompt();
+            return;
+        }
+
+        if (promptText != null)
+        {
+            promptText.SetText(currentDialogue != null ? currentDialogue.PromptText : defaultPromptText);
+        }
+
+        promptUI.SetActive(true);
+        promptUI.transform.position = hit.collider.transform.position + offset;
+        promptUI.transform.LookAt(mainCamera.transform);
+        promptUI.transform.Rotate(0, 180, 0);
+
+        if (playerInputHandler.InteractTriggered)
+        {
+            if (currentDialogue != null)
             {
-                promptUI.SetActive(true);
-                promptUI.transform.position = hit.collider.transform.position + offset;
-                promptUI.transform.LookAt(mainCamera.transform);
-                promptUI.transform.Rotate(0, 180, 0);
-
-                currentTrigger = hit.collider.GetComponent<DialogueTrigger>();
-                currentPickup = hit.collider.GetComponent<ItemPickup>();
-
-                if (playerInputHandler.InteractTriggered)
-                {
-                    if (currentTrigger != null)
-                        currentTrigger.TriggerDialogue();
-                    else if (currentPickup != null)
-                        currentPickup.GiveItem();
-                }
+                currentDialogue.Interact();
             }
             else
             {
-                ResetPrompt();
+                currentPickup.GiveItem();
             }
-        }
-        else
-        {
-            ResetPrompt();
         }
     }
 
     void ResetPrompt()
     {
         promptUI.SetActive(false);
-        currentTrigger = null;
         currentPickup = null;
+        currentDialogue = null;
     }
 }

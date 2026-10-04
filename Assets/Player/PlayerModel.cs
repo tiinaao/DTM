@@ -2,27 +2,22 @@ using UnityEngine;
 
 public class PlayerModel : MonoBehaviour
 {
-    [Header("Movement Speeds")]
     public float walkSpeed = 4.0f;
     [SerializeField] private float sprintMultiplier = 2.0f;
     [SerializeField] private float sneakMultiplier = 0.4f;
 
-    [Header("Jump Parameters")]
     [SerializeField] private float jumpForce = 8.5f;
     [SerializeField] private float gravityMultiplayer = 2.0f;
     [SerializeField] private float jumpStaminaCost = 0.2f;
 
-    [Header("Look Parameters")]
     [SerializeField] private float mouseSensitivity = 0.2f;
     [SerializeField] private float upDownLookRange = 80.0f;
 
-    [Header("Climbing")]
     [SerializeField] private float climbCheckDistance = 0.45f;
     [SerializeField] private float climbStepForce = 8.0f;
     [SerializeField] private float climbHoldGravityScale = 0.05f;
     [SerializeField] private LayerMask climbableLayers;
 
-    [Header("References")]
     [SerializeField] private CharacterController characterController;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private PlayerInputHandler playerInputHandler;
@@ -40,12 +35,14 @@ public class PlayerModel : MonoBehaviour
     private bool jumpConsumed;
     private float climbWallLostTimer = 0f;
     private const float climbWallGrace = 0.12f;
+    private int ignoreLookUntilFrame;
 
     private float halfHeight => characterController.height * 0.5f;
     private bool IsSneaking => playerInputHandler != null && playerInputHandler.CrouchTriggered;
     private bool SprintInput => playerInputHandler != null && playerInputHandler.SprintTriggered;
     private bool IsMoving => playerInputHandler != null && playerInputHandler.MovementInput.sqrMagnitude > 0.01f;
     public bool IsSprinting => stamina != null && stamina.IsSprinting;
+    public float VerticalRotation => verticalRotation;
 
     private float CurrentSpeed
     {
@@ -57,6 +54,22 @@ public class PlayerModel : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        GameplayBlocker.Changed += OnBlockChanged;
+    }
+
+    private void OnDisable()
+    {
+        GameplayBlocker.Changed -= OnBlockChanged;
+    }
+
+    private void OnBlockChanged(BlockFlags old, BlockFlags now)
+    {
+        if (((old ^ now) & BlockFlags.FreeCursor) != 0)
+            ignoreLookUntilFrame = Time.frameCount + 3;
+    }
+
     void Start()
     {
         GameManager.Instance.Player = this;
@@ -66,8 +79,16 @@ public class PlayerModel : MonoBehaviour
 
     private void Update()
     {
-        HandleSprinting();
-        HandleMovement();
+        if (GameplayBlocker.IsBlocked(BlockFlags.Movement))
+        {
+            if (stamina != null) stamina.SetSprinting(false);
+        }
+        else
+        {
+            HandleSprinting();
+            HandleMovement();
+        }
+
         HandleRotation();
     }
 
@@ -295,7 +316,9 @@ public class PlayerModel : MonoBehaviour
 
     private void HandleRotation()
     {
+        if (GameplayBlocker.IsBlocked(BlockFlags.Camera)) return;
         if (Cursor.lockState != CursorLockMode.Locked) return;
+        if (Time.frameCount < ignoreLookUntilFrame) return;
 
         float mx = playerInputHandler.RotationInput.x * mouseSensitivity;
         float my = playerInputHandler.RotationInput.y * mouseSensitivity;

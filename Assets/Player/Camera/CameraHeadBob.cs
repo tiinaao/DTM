@@ -14,17 +14,29 @@ public class CameraHeadBob : MonoBehaviour
 
     private Vector3 restPosition;
     private float Timer;
+    private float currentRoll;
 
     void Start()
     {
         restPosition = transform.localPosition;
     }
 
-    void Update()
+    void LateUpdate()
     {
+        float pitch = playerModel != null ? playerModel.VerticalRotation : 0f;
+
+        if (GameplayBlocker.IsBlocked(BlockFlags.Camera))
+        {
+            transform.localRotation = Quaternion.Euler(pitch, 0f, currentRoll);
+            return;
+        }
+
         bool isMoving = inputHandler != null && inputHandler.MovementInput.sqrMagnitude > 0.01f;
         bool isSprinting = playerModel != null && playerModel.IsSprinting;
         bool isSneaking = inputHandler != null && inputHandler.CrouchTriggered;
+
+        float targetRoll = 0f;
+        Vector3 targetPosition = restPosition;
 
         if (isMoving)
         {
@@ -38,17 +50,17 @@ public class CameraHeadBob : MonoBehaviour
             float X = Mathf.Cos(Timer * Mathf.PI) * swayAmplitude;
             float Z = Mathf.Sin(Timer * Mathf.PI * 2f) * swayAmplitude * 8f;
 
-            Vector3 target = restPosition + new Vector3(X, Y, 0f);
-            transform.localPosition = Vector3.Lerp(transform.localPosition, target, Time.deltaTime * smoothSpeed);
-
-            Quaternion targetRot = Quaternion.Euler(0f, 0f, -Z);
-            transform.localRotation = Quaternion.Slerp(transform.localRotation, targetRot, Time.deltaTime * smoothSpeed);
+            targetPosition = restPosition + new Vector3(X, Y, 0f);
+            targetRoll = -Z;
         }
         else
         {
             Timer = 0f;
-            transform.localPosition = Vector3.Lerp(transform.localPosition, restPosition, Time.deltaTime * smoothSpeed);
-            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.identity, Time.deltaTime * smoothSpeed);
         }
+
+        float t = Time.deltaTime * smoothSpeed;
+        transform.localPosition = Vector3.Lerp(transform.localPosition, targetPosition, t);
+        currentRoll = Mathf.Lerp(currentRoll, targetRoll, t);
+        transform.localRotation = Quaternion.Euler(pitch, 0f, currentRoll);
     }
 }

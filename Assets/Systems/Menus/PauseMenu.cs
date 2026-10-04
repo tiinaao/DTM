@@ -4,8 +4,12 @@ public class PauseMenu : MonoBehaviour
 {
     [SerializeField] private GameObject menuRoot;
     [SerializeField] private PlayerInputHandler playerInputHandler;
-    [SerializeField] private PlayerModel playerModel;
     [SerializeField] private InventoryUI inventoryUI;
+
+    private const BlockFlags PauseBlocks =
+        BlockFlags.Movement | BlockFlags.Camera | BlockFlags.Actions |
+        BlockFlags.Interaction | BlockFlags.Inventory |
+        BlockFlags.FreeCursor | BlockFlags.FreezeTime;
 
     private bool isPaused = false;
 
@@ -31,9 +35,13 @@ public class PauseMenu : MonoBehaviour
     {
         isPaused = !isPaused;
         menuRoot.SetActive(isPaused);
-        Time.timeScale = isPaused ? 0f : 1f;
-        Cursor.visible = isPaused;
-        Cursor.lockState = isPaused ? CursorLockMode.None : CursorLockMode.Locked;
-        playerModel.enabled = !isPaused;
+
+        if (isPaused) GameplayBlocker.Block(this, PauseBlocks);
+        else GameplayBlocker.Release(this);
+    }
+
+    void OnDisable()
+    {
+        GameplayBlocker.Release(this); 
     }
 }

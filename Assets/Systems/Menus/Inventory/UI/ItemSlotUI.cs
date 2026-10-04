@@ -20,6 +20,8 @@ public class ItemSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     private Vector3 baseScale;
     private Vector3 targetScale;
 
+    public RectTransform Rect => (RectTransform)transform;
+
     private void Awake()
     {
         baseScale = transform.localScale;
@@ -38,11 +40,28 @@ public class ItemSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         _item = item;
         _ui = ui;
 
+        icon.enabled = true;
         icon.sprite = item.data.icon;
 
         quantityText.text = item.data.isStackable && item.quantity > 0
             ? item.quantity.ToString("D2")
             : "";
+
+        if (TryGetComponent(out Button button))
+            button.interactable = true;
+    }
+
+    public void SetupEmpty()
+    {
+        _item = null;
+        _ui = null;
+
+        icon.sprite = null;
+        icon.enabled = false;
+        quantityText.text = "";
+
+        if (TryGetComponent(out Button button))
+            button.interactable = false;
     }
 
     private void Update()
@@ -65,19 +84,25 @@ public class ItemSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (_item == null) return;
+
         UISoundManager.instance.Play("hover");
         targetAlpha = 1f;
         targetScale = baseScale * hoverScale;
+
+        _ui.OnSlotHover(this, _item);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         targetAlpha = 0f;
         targetScale = baseScale;
+
+        if (_item != null && _ui != null)
+            _ui.OnSlotHoverEnd(this);
     }
 
     public void OnClick()
     {
-        _ui.ShowDetails(_item);
     }
 }
