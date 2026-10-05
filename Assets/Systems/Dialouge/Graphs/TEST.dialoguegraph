@@ -545,7 +545,7 @@ MonoBehaviour:
     - rid: 8354963492774346974
       type: {class: 'Constant`1[[System.String, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
-        m_Value: Test 1 Dia
+        m_Value: <color="yellow">Test</color> 1 Dia
     - rid: 8354963492774346975
       type: {class: 'Constant`1[[System.String, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:

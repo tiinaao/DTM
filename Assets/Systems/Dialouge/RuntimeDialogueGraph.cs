@@ -6,8 +6,7 @@ public enum DialogueNodeType
 {
     Dialogue,
     Choice,
-    Item,
-    Condition
+    Item
 }
 
 public enum ItemAction

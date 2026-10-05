@@ -33,6 +33,8 @@ public class DialogueManager : MonoBehaviour
     private RectTransform _panelRect;
     private Vector2 _shownPosition;
     private Coroutine _slideRoutine;
+    private Coroutine _displayLineCoroutine;
+    private bool _canContinue = false;
 
     private int _openedFrame = -1;
 
@@ -88,6 +90,12 @@ public class DialogueManager : MonoBehaviour
         var mouse = Mouse.current;
         if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
 
+        if (!_canContinue)
+        {
+            SkipTyping();
+            return;
+        }
+
         ShowNode(_currentNode.NextNodeID);
     }
 
@@ -125,6 +133,12 @@ public class DialogueManager : MonoBehaviour
         _currentNode = null;
         ClearChoices();
 
+        if (_displayLineCoroutine != null)
+        {
+            StopCoroutine(_displayLineCoroutine);
+            _displayLineCoroutine = null;
+        }
+
         IsDialogueActive = false;
 
         DialogueEnded?.Invoke();
@@ -141,20 +155,10 @@ public class DialogueManager : MonoBehaviour
         {
             if (!_nodeLookup.TryGetValue(nodeID, out var node)) return null;
 
-            switch (node.NodeType)
-            {
-                case DialogueNodeType.Item:
-                    ApplyItem(node);
-                    nodeID = node.NextNodeID;
-                    break;
+            if (node.NodeType != DialogueNodeType.Item) return node;
 
-                case DialogueNodeType.Condition:
-                    nodeID = Evaluate(node) ? node.TrueNodeID : node.FalseNodeID;
-                    break;
-
-                default:
-                    return node;
-            }
+            ApplyItem(node);
+            nodeID = node.NextNodeID;
         }
 
         return null;
@@ -187,12 +191,6 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
-    private bool Evaluate(RuntimeDialogueNode node)
-    {
-        var inventory = GetInventory();
-        return inventory != null && inventory.HasItem(node.ItemName, node.Amount);
-    }
-
     private void ShowNode(string nodeID)
     {
         var node = Resolve(nodeID);
@@ -211,7 +209,13 @@ public class DialogueManager : MonoBehaviour
         _currentNode = node;
 
         SpeakerNameText.SetText(node.SpeakerName);
-        DialogueText.SetText(node.DialogueText);
+
+        if (_displayLineCoroutine != null)
+        {
+            StopCoroutine(_displayLineCoroutine);
+        }
+
+        _displayLineCoroutine = StartCoroutine(DisplayLine(node.DialogueText));
 
         ClearChoices();
 
@@ -228,6 +232,49 @@ public class DialogueManager : MonoBehaviour
             string destination = choice.DestinationNodeID;
             button.onClick.AddListener(() => ShowNode(destination));
         }
+    }
+
+    private IEnumerator DisplayLine(string line)
+    {
+        _canContinue = false;
+        DialogueText.text = "";
+
+        bool isAddingRichTextTag = false;
+        var wait = new WaitForSecondsRealtime(0.05f);
+
+        foreach (char letter in line)
+        {
+            if (letter == '<' || isAddingRichTextTag)
+            {
+                isAddingRichTextTag = true;
+                DialogueText.text += letter;
+
+                if (letter == '>')
+                {
+                    isAddingRichTextTag = false;
+                }
+
+                continue;
+            }
+
+            DialogueText.text += letter;
+            yield return wait;
+        }
+
+        _canContinue = true;
+        _displayLineCoroutine = null;
+    }
+
+    private void SkipTyping()
+    {
+        if (_displayLineCoroutine != null)
+        {
+            StopCoroutine(_displayLineCoroutine);
+            _displayLineCoroutine = null;
+        }
+
+        DialogueText.text = _currentNode.DialogueText;
+        _canContinue = true;
     }
 
     private void ClearChoices()

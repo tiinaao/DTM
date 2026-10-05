@@ -27,6 +27,10 @@ public class CameraHeadBob : MonoBehaviour
 
         if (GameplayBlocker.IsBlocked(BlockFlags.Camera))
         {
+            Timer = 0f;
+            float blockedT = Time.unscaledDeltaTime * smoothSpeed;
+            transform.localPosition = Vector3.Lerp(transform.localPosition, restPosition, blockedT);
+            currentRoll = Mathf.Lerp(currentRoll, 0f, blockedT);
             transform.localRotation = Quaternion.Euler(pitch, 0f, currentRoll);
             return;
         }
@@ -47,7 +51,7 @@ public class CameraHeadBob : MonoBehaviour
             Timer += Time.deltaTime * freq;
 
             float Y = Mathf.Sin(Timer * Mathf.PI * 2f) * amplitude;
-            float X = Mathf.Cos(Timer * Mathf.PI) * swayAmplitude;
+            float X = Mathf.Sin(Timer * Mathf.PI) * swayAmplitude;
             float Z = Mathf.Sin(Timer * Mathf.PI * 2f) * swayAmplitude * 8f;
 
             targetPosition = restPosition + new Vector3(X, Y, 0f);
