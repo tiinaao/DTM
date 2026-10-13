@@ -4,36 +4,28 @@ using UnityEngine;
 
 public class AnimReach : MonoBehaviour
 {
-    [Header("References")]
     public Transform player;
     public Transform bonesRoot;
 
-    [Header("Detection")]
-    public float detectDistance = 3f;
-    public float loseDistance = 4f;
+    public float detectDistance = 5f;
+    public float loseDistance = 10f;
 
-    [Header("Tentacle Feel")]
     public float maxBendAngle = 70f;
     public float boneSpeed = 6f;
     public float tipBias = 3f;
 
-    [Header("Reach & Return")]
-    public float reachSpeed = 14f;
-    public float returnSpeed = 2f;
+    public float reachSpeed = 20f;
+    public float returnSpeed = 0.5f;
     public float orbitRadius = 0.5f;
-
-    [Header("Idle Motion")]
-    public float swayAmount = 0.06f;
+    public float swayAmount = 0.6f;
     public float swaySpeed = 0.7f;
-
-    [Header("Collision")]
-    public float skinThickness = 0.05f;
-    public float boneSphereRadius = 0.08f;
-
-    [Header("Slow Effect")]
+    public float skinThickness = 0.5f;
+    public float boneSphereRadius = 0.8f;
     public float slowMultiplierSetting = 0.3f;
-    public float slowLerpSpeed = 5f;
-    public float slowProximityDistance = 1.2f;
+    public float slowLerpSpeed = 10f;
+    public float slowProximityDistance = 5f;
+    public float recoverDuration = 3f;
+    public float slowHoldTime = 0.4f;
 
     BoxCollider playerBox;
     PlayerModel playerModel;
@@ -41,6 +33,7 @@ public class AnimReach : MonoBehaviour
     int touchCount = 0;
     float currentSlow = 1f;
     float baseWalkSpeed;
+    float holdTimer;
     public bool IsInSlowZone { get; private set; }
     public bool IsSlowed => currentSlow < 1f;
     public float CurrentSlowAmount => currentSlow;
@@ -196,11 +189,24 @@ public class AnimReach : MonoBehaviour
         bool inAttack = phase == AttackPhase.Attack;
         bool proximityTouch = inAttack && dist <= slowProximityDistance;
         bool inSlow = (inAttack && (touchCount > 0 || proximityTouch));
-        float targetSlow = inSlow ? slowMultiplierSetting : 1f;
 
-        IsInSlowZone = inSlow;
+        if (inSlow) holdTimer = slowHoldTime;
+        else holdTimer -= Time.deltaTime;
 
-        currentSlow = Mathf.Lerp(currentSlow, targetSlow, slowLerpSpeed * Time.deltaTime);
+        bool wantSlow = holdTimer > 0f;
+        float targetSlow = wantSlow ? slowMultiplierSetting : 1f;
+
+        IsInSlowZone = wantSlow;
+
+        if (targetSlow < currentSlow)
+        {
+            currentSlow = Mathf.Lerp(currentSlow, targetSlow, slowLerpSpeed * Time.deltaTime);
+        }
+        else
+        {
+            float rate = (1f - slowMultiplierSetting) / Mathf.Max(recoverDuration, 0.01f);
+            currentSlow = Mathf.MoveTowards(currentSlow, targetSlow, rate * Time.deltaTime);
+        }
 
         if (playerModel != null)
             playerModel.walkSpeed = baseWalkSpeed * currentSlow;
@@ -268,25 +274,23 @@ public class AnimReach : MonoBehaviour
         }
         else
         {
-            Vector3 restWorld = bonesRoot.TransformPoint(t.restTipLocal);
-            restWorld.y = Mathf.Max(restWorld.y, t.bones[0].position.y);
-
-            t.ikTarget = Vector3.Lerp(t.ikTarget, restWorld, returnSpeed * Time.deltaTime);
+            t.ikTarget = t.bones[n - 1].position;
 
             if (!t.settled)
             {
+                float maxAngle = 0f;
                 for (int i = 0; i < n; i++)
+                {
                     t.ikLocalRot[i] = Quaternion.Slerp(t.ikLocalRot[i], t.restLocalRot[i], returnSpeed * Time.deltaTime);
-
-                float tipDist = Vector3.Distance(t.bones[n - 1].position, restWorld);
-                if (tipDist < 0.5f) t.settled = true;
-            }
-
-            if (t.settled)
-            {
-                ApplyIdleMotion(t, n);
+                    t.bones[i].localRotation = t.ikLocalRot[i];
+                    maxAngle = Mathf.Max(maxAngle, Quaternion.Angle(t.ikLocalRot[i], t.restLocalRot[i]));
+                }
+                if (maxAngle < 3f) t.settled = true;
                 return;
             }
+
+            ApplyIdleMotion(t, n);
+            return;
         }
 
         for (int i = 0; i < n; i++)
@@ -373,22 +377,15 @@ public class AnimReach : MonoBehaviour
         {
             float frac = (float)i / Mathf.Max(n - 1, 1);
 
-            Quaternion boneRestWorld = worldRestRot * t.restLocalRot[i];
-            Vector3 stableRight = boneRestWorld * Vector3.right;
-
             float swayAng = Mathf.Sin(st + i * 0.5f) * swayAmount * frac * 18f;
-            Quaternion sway = Quaternion.AngleAxis(swayAng, stableRight);
+            Quaternion sway = Quaternion.AngleAxis(swayAng, Vector3.right);
 
             Quaternion target = t.restLocalRot[i] * sway;
-
             Quaternion result = Quaternion.Slerp(t.ikLocalRot[i], target, returnSpeed * Time.deltaTime);
-
             if (IsNaNQ(result)) continue;
 
             t.bones[i].localRotation = result;
             t.ikLocalRot[i] = result;
-
-            worldRestRot = worldRestRot * t.restLocalRot[i];
         }
     }
 

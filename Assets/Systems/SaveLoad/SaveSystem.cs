@@ -13,6 +13,7 @@ public class SaveSystem
         public HealthSaveData HealthData;
         public StaminaSaveData StaminaData;
         public InventorySaveData InventoryData;
+        public QuestSaveData QuestsData;
     }
 
     public static string SaveFileName() => Application.persistentDataPath + "/save.save";
@@ -36,6 +37,9 @@ public class SaveSystem
 
         if (GameManager.Instance.Inventory != null)
             GameManager.Instance.Inventory.Save(ref _saveData.InventoryData);
+
+        if (GameManager.Instance.Quests != null)
+            GameManager.Instance.Quests.Save(ref _saveData.QuestsData);
     }
 
     public static void Load()
@@ -60,5 +64,8 @@ public class SaveSystem
 
         if (GameManager.Instance.Inventory != null)
             GameManager.Instance.Inventory.Load(_saveData.InventoryData);
+
+        if (GameManager.Instance.Quests != null)
+            GameManager.Instance.Quests.Load(_saveData.QuestsData);
     }
 }

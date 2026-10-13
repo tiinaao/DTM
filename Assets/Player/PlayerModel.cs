@@ -2,20 +2,20 @@ using UnityEngine;
 
 public class PlayerModel : MonoBehaviour
 {
-    public float walkSpeed = 4.0f;
-    [SerializeField] private float sprintMultiplier = 2.0f;
-    [SerializeField] private float sneakMultiplier = 0.4f;
+    public float walkSpeed = 8.0f;
+    private float sprintMultiplier = 1.6f;
+    private float sneakMultiplier = 0.4f;
 
-    [SerializeField] private float jumpForce = 8.5f;
-    [SerializeField] private float gravityMultiplayer = 2.0f;
-    [SerializeField] private float jumpStaminaCost = 0.2f;
+    private float jumpForce = 10.0f;
+    private float gravityMultiplayer = 3.5f;
+    private float jumpStaminaCost = 0.2f;
 
-    [SerializeField] private float mouseSensitivity = 0.2f;
-    [SerializeField] private float upDownLookRange = 80.0f;
+    private float mouseSensitivity = 0.2f;
+    private float upDownLookRange = 80.0f;
 
-    [SerializeField] private float climbCheckDistance = 0.45f;
-    [SerializeField] private float climbStepForce = 8.0f;
-    [SerializeField] private float climbHoldGravityScale = 0.05f;
+    private float climbCheckDistance = 0.8f;
+    private float climbStepForce = 8.0f;
+    private float climbHoldGravityScale = 0.05f;
     [SerializeField] private LayerMask climbableLayers;
 
     [SerializeField] private CharacterController characterController;
@@ -124,13 +124,6 @@ public class PlayerModel : MonoBehaviour
         return Physics.Raycast(origin, -climbWallNormal, out hit, climbCheckDistance, climbableLayers);
     }
 
-    private bool WallIsClimbHeight(RaycastHit hit)
-    {
-        float wallTop = hit.collider.bounds.max.y;
-        float playerTop = transform.position.y + characterController.height;
-        return wallTop > transform.position.y + 0.1f && wallTop < playerTop + characterController.height;
-    }
-
     private bool CheckVaultable()
     {
         Vector3 fwd = -climbWallNormal;
@@ -148,9 +141,7 @@ public class PlayerModel : MonoBehaviour
 
         if (!isClimbing)
         {
-            if (!characterController.isGrounded && jumpHeld &&
-                CheckWallAhead(out RaycastHit hit) &&
-                WallIsClimbHeight(hit))
+            if (!characterController.isGrounded && jumpHeld && CheckWallAhead(out RaycastHit hit))
             {
                 isClimbing = true;
                 climbWallNormal = hit.normal;

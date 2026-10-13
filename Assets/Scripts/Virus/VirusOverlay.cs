@@ -3,34 +3,26 @@ using UnityEngine.UI;
 
 public class VirusOverlay : MonoBehaviour
 {
-    [Header("References")]
     public AnimReach animReach;
     public Shader virusShader;
     public Shader veinsShader;
     public RawImage veinsImage;
 
-    [Header("Intensity")]
     public float maxIntensity = 0.6f;
     public float fadeInDuration = 0.5f;
     public float fadeOutDuration = 3f;
 
-    [Header("Colors")]
     public Color vignColorA = new Color(0.45f, 0.00f, 0.00f, 1f);
     public Color vignColorB = new Color(0.12f, 0.00f, 0.00f, 1f);
     public Color vignColorDark = new Color(0.0f, 0.0f, 0.0f, 1f);
 
-    [Header("Grain")]
     public float grainStrength = 0.365f;
     public float grainScale = 16.5f;
     public float grainSpeed = 2.5f;
-
-    [Header("Shape")]
     public float centerX = 0.478f;
     public float centerY = 0.478f;
     public float radiusX = 0.45f;
     public float radiusY = 0.45f;
-
-    [Header("Veins Properties")]
     public Texture2D veinsColour;
     public Texture2D veinsMaskMap1;
     public Texture2D veinsMaskMap2;

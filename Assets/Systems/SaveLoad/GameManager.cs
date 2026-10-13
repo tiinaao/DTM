@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     public Health Health { get; set; }
     public Stamina Stamina { get; set; }
     public InventorySystem Inventory { get; set; }
+    public QuestManager Quests { get; set; }
 
     private void Awake()
     {
