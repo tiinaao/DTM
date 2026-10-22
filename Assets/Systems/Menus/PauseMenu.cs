@@ -21,6 +21,7 @@ public class PauseMenu : MonoBehaviour
     void Update()
     {
         if (!playerInputHandler.EscTriggered) return;
+        if (NPCInteraction.BlocksPause) return;
 
         if (inventoryUI != null && inventoryUI.IsOpen)
         {
@@ -42,6 +43,6 @@ public class PauseMenu : MonoBehaviour
 
     void OnDisable()
     {
-        GameplayBlocker.Release(this); 
+        GameplayBlocker.Release(this);
     }
 }

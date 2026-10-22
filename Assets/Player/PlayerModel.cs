@@ -2,47 +2,38 @@ using UnityEngine;
 
 public class PlayerModel : MonoBehaviour
 {
-    public float walkSpeed = 8.0f;
-    private float sprintMultiplier = 1.6f;
-    private float sneakMultiplier = 0.4f;
+    [Header("Movement")]
+    public float walkSpeed = 4.0f;
+    [SerializeField] private float sprintMultiplier = 2.0f;
+    [SerializeField] private float sneakMultiplier = 0.4f;
+    [SerializeField] private float gravityMultiplayer = 2.0f;
 
-    private float jumpForce = 10.0f;
-    private float gravityMultiplayer = 3.5f;
-    private float jumpStaminaCost = 0.2f;
-
-    private float mouseSensitivity = 0.2f;
-    private float upDownLookRange = 80.0f;
-
-    private float climbCheckDistance = 0.8f;
-    private float climbStepForce = 8.0f;
-    private float climbHoldGravityScale = 0.05f;
-    [SerializeField] private LayerMask climbableLayers;
-
+    [Header("References")]
     [SerializeField] private CharacterController characterController;
-    [SerializeField] private Camera mainCamera;
     [SerializeField] private PlayerInputHandler playerInputHandler;
     [SerializeField] private Stamina stamina;
     [SerializeField] private Health health;
     [SerializeField] private AnimReach animReach;
 
-    private Vector3 climbWallNormal;
-    private Vector3 currentMovement;
-    private float verticalRotation;
-    private bool isClimbing;
-    private bool wasJumpHeld;
-    private bool vaulting;
-    private bool vaultUpApplied;
-    private bool jumpConsumed;
-    private float climbWallLostTimer = 0f;
-    private const float climbWallGrace = 0.12f;
-    private int ignoreLookUntilFrame;
+    [SerializeField] private bool flipSpriteForLeft = true;
+    [SerializeField] private float directionDeadzone = 0.1f;
 
-    private float halfHeight => characterController.height * 0.5f;
+    [Header("Conversation Pose")]
+    [SerializeField] private string sideState = "walk_r";
+    [SerializeField] private string towardCameraState = "walk_f";
+    [SerializeField] private string awayFromCameraState = "walk_b";
+    [SerializeField] private string idleState = "idle";
+
+    private Vector3 currentMovement;
+    private Animator animator;
+    private SpriteRenderer spriteRenderer;
+    private bool conversing;
+
     private bool IsSneaking => playerInputHandler != null && playerInputHandler.CrouchTriggered;
     private bool SprintInput => playerInputHandler != null && playerInputHandler.SprintTriggered;
     private bool IsMoving => playerInputHandler != null && playerInputHandler.MovementInput.sqrMagnitude > 0.01f;
     public bool IsSprinting => stamina != null && stamina.IsSprinting;
-    public float VerticalRotation => verticalRotation;
+    private bool MovementBlocked => GameplayBlocker.IsBlocked(BlockFlags.Movement);
 
     private float CurrentSpeed
     {
@@ -54,227 +45,74 @@ public class PlayerModel : MonoBehaviour
         }
     }
 
-    private void OnEnable()
+    private void Awake()
     {
-        GameplayBlocker.Changed += OnBlockChanged;
-    }
-
-    private void OnDisable()
-    {
-        GameplayBlocker.Changed -= OnBlockChanged;
-    }
-
-    private void OnBlockChanged(BlockFlags old, BlockFlags now)
-    {
-        if (((old ^ now) & BlockFlags.FreeCursor) != 0)
-            ignoreLookUntilFrame = Time.frameCount + 3;
+        animator = GetComponentInChildren<Animator>();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     }
 
     void Start()
     {
         GameManager.Instance.Player = this;
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private void Update()
     {
-        if (GameplayBlocker.IsBlocked(BlockFlags.Movement))
-        {
-            if (stamina != null) stamina.SetSprinting(false);
-        }
-        else
-        {
-            HandleSprinting();
-            HandleMovement();
-        }
-
-        HandleRotation();
+        HandleSprinting();
+        HandleMovement();
+        HandleAnimation();
     }
 
     private void HandleSprinting()
     {
         if (stamina == null) return;
-        bool wantsToSprint = SprintInput && IsMoving && !IsSneaking;
+        bool wantsToSprint = !MovementBlocked && SprintInput && IsMoving && !IsSneaking;
         stamina.SetSprinting(wantsToSprint);
     }
 
     private Vector3 CalculateWorldDirection()
     {
-        Vector3 input = new Vector3(playerInputHandler.MovementInput.x, 0, playerInputHandler.MovementInput.y);
-        return transform.TransformDirection(input).normalized;
-    }
+        if (MovementBlocked) return Vector3.zero;
 
-    private Vector3 HorizontalForward()
-    {
-        Vector3 f = transform.forward;
-        f.y = 0f;
-        return f.normalized;
-    }
+        Vector2 input = playerInputHandler.MovementInput;
 
-    private bool CheckWallAhead(out RaycastHit hit)
-    {
-        Vector3 origin = transform.position + Vector3.up * halfHeight * 0.5f;
-        return Physics.Raycast(origin, HorizontalForward(), out hit, climbCheckDistance, climbableLayers);
-    }
+        Camera cam = Camera.main;
+        Vector3 camForward;
+        Vector3 camRight;
 
-    private bool CheckClimbWall(out RaycastHit hit)
-    {
-        Vector3 origin = transform.position + Vector3.up * halfHeight * 0.5f;
-        return Physics.Raycast(origin, -climbWallNormal, out hit, climbCheckDistance, climbableLayers);
-    }
-
-    private bool CheckVaultable()
-    {
-        Vector3 fwd = -climbWallNormal;
-        fwd.y = 0f;
-        fwd.Normalize();
-        Vector3 overWallPos = transform.position + fwd * climbCheckDistance * 1.5f + Vector3.up * characterController.height;
-        return Physics.Raycast(overWallPos, Vector3.down, characterController.height * 1.5f, climbableLayers);
-    }
-
-    private void HandleClimbing()
-    {
-        bool jumpHeld = playerInputHandler != null && playerInputHandler.JumpTriggered;
-        bool jumpJustPressed = jumpHeld && !wasJumpHeld;
-        wasJumpHeld = jumpHeld;
-
-        if (!isClimbing)
+        if (cam != null)
         {
-            if (!characterController.isGrounded && jumpHeld && CheckWallAhead(out RaycastHit hit))
-            {
-                isClimbing = true;
-                climbWallNormal = hit.normal;
-                vaultUpApplied = false;
-                jumpConsumed = true;
-            }
-            return;
-        }
+            camForward = cam.transform.forward;
+            camForward.y = 0f;
+            camForward.Normalize();
 
-        if (IsSneaking)
-        {
-            isClimbing = false;
-            vaulting = false;
-            vaultUpApplied = false;
-            climbWallLostTimer = 0f;
-            return;
-        }
-
-        if (stamina != null && (stamina.IsExhausted || stamina.CurrentStamina <= 0f))
-        {
-            isClimbing = false;
-            vaulting = false;
-            vaultUpApplied = false;
-            climbWallLostTimer = 0f;
-            return;
-        }
-
-        bool wallPresent = CheckClimbWall(out _);
-
-        if (!wallPresent)
-        {
-            Vector3 right = Vector3.Cross(climbWallNormal, Vector3.up).normalized;
-            Vector3 origin = transform.position + Vector3.up * halfHeight * 0.5f;
-            bool leftHit = Physics.Raycast(origin - right * 0.2f, -climbWallNormal, climbCheckDistance, climbableLayers);
-            bool rightHit = Physics.Raycast(origin + right * 0.2f, -climbWallNormal, climbCheckDistance, climbableLayers);
-            if (leftHit || rightHit)
-                wallPresent = true;
-        }
-
-        if (!wallPresent && !vaulting)
-        {
-            climbWallLostTimer += Time.deltaTime;
-            if (climbWallLostTimer >= climbWallGrace)
-            {
-                climbWallLostTimer = 0f;
-                if (CheckVaultable())
-                {
-                    vaulting = true;
-                    vaultUpApplied = false;
-                }
-                else
-                {
-                    isClimbing = false;
-                    vaulting = false;
-                    vaultUpApplied = false;
-                }
-            }
-        }
-        else if (wallPresent)
-        {
-            climbWallLostTimer = 0f;
-        }
-
-        if (vaulting)
-        {
-            if (!vaultUpApplied)
-            {
-                currentMovement.y = climbStepForce * 1f;
-                vaultUpApplied = true;
-                if (stamina != null)
-                    stamina.UseStamina(jumpStaminaCost);
-            }
-
-            Vector3 fwd = -climbWallNormal;
-            fwd.y = 0f;
-            fwd.Normalize();
-            currentMovement.x = fwd.x * walkSpeed;
-            currentMovement.z = fwd.z * walkSpeed;
-
-            currentMovement.y += Physics.gravity.y * gravityMultiplayer * Time.deltaTime;
-
-            if (characterController.isGrounded && currentMovement.y <= 0f)
-            {
-                isClimbing = false;
-                vaulting = false;
-                vaultUpApplied = false;
-                climbWallLostTimer = 0f;
-            }
-            return;
-        }
-
-        currentMovement.y = jumpJustPressed ? climbStepForce : Mathf.Lerp(currentMovement.y, 0f, 10f * Time.deltaTime);
-        if (jumpJustPressed && stamina != null)
-            stamina.UseStamina(jumpStaminaCost);
-
-        currentMovement.y += Physics.gravity.y * climbHoldGravityScale * Time.deltaTime;
-
-        if (characterController.isGrounded && currentMovement.y < 0f)
-        {
-            isClimbing = false;
-            vaulting = false;
-            vaultUpApplied = false;
-            climbWallLostTimer = 0f;
-        }
-    }
-
-    private void HandleJumping()
-    {
-        if (isClimbing) return;
-
-        bool jumpHeld = playerInputHandler != null && playerInputHandler.JumpTriggered;
-
-        if (!jumpHeld)
-            jumpConsumed = false;
-
-        if (characterController.isGrounded)
-        {
-            currentMovement.y = -0.5f;
-
-            if (jumpHeld && !jumpConsumed && (stamina == null || stamina.HasStaminaForJump))
-            {
-                currentMovement.y = jumpForce;
-                jumpConsumed = true;
-                if (stamina != null)
-                {
-                    stamina.UseStamina(jumpStaminaCost);
-                    stamina.SetSprinting(false);
-                }
-            }
+            camRight = cam.transform.right;
+            camRight.y = 0f;
+            camRight.Normalize();
         }
         else
         {
-            currentMovement.y += Physics.gravity.y * gravityMultiplayer * Time.deltaTime;
+            camForward = Vector3.forward;
+            camRight = Vector3.right;
+        }
+
+        Vector3 dir = camForward * input.y + camRight * input.x;
+        return dir.normalized;
+    }
+
+    private void HandleGravity()
+    {
+        if (characterController.isGrounded)
+        {
+            currentMovement.y = -0.5f;
+        }
+        else
+        {
+            currentMovement.y = Mathf.Clamp(
+                currentMovement.y + Physics.gravity.y * gravityMultiplayer * Time.deltaTime, -20f, 10f);
         }
     }
 
@@ -285,8 +123,7 @@ public class PlayerModel : MonoBehaviour
         currentMovement.x = dir.x * CurrentSpeed;
         currentMovement.z = dir.z * CurrentSpeed;
 
-        HandleClimbing();
-        HandleJumping();
+        HandleGravity();
 
         characterController.Move(currentMovement * Time.deltaTime);
 
@@ -294,28 +131,97 @@ public class PlayerModel : MonoBehaviour
             health.CheckFallDamage(characterController.isGrounded, transform.position.y);
     }
 
-    private void ApplyHorizontalRotation(float rot)
+    private void HandleAnimation()
     {
-        transform.Rotate(0, rot, 0);
+        if (animator == null || conversing) return;
+
+        Vector2 input = (playerInputHandler != null && !MovementBlocked) ? playerInputHandler.MovementInput : Vector2.zero;
+        bool moving = input.sqrMagnitude > 0.01f;
+
+        float sendMoveX = 0f;
+        float sendMoveY = 0f;
+
+        if (moving)
+        {
+            if (Mathf.Abs(input.y) >= Mathf.Abs(input.x))
+            {
+                sendMoveY = input.y;
+            }
+            else
+            {
+                sendMoveX = Mathf.Abs(input.x);
+            }
+        }
+
+        animator.SetFloat("moveX", sendMoveX);
+        animator.SetFloat("moveY", sendMoveY);
+        animator.SetBool("isMoving", moving);
+
+        if (spriteRenderer != null && flipSpriteForLeft)
+        {
+            if (input.x > directionDeadzone)
+                spriteRenderer.flipX = true;
+            else if (input.x < -directionDeadzone)
+                spriteRenderer.flipX = false;
+        }
     }
 
-    private void ApplyVerticalRotation(float rot)
+    public void EnterConversation(Vector3 npcPosition)
     {
-        verticalRotation = Mathf.Clamp(verticalRotation - rot, -upDownLookRange, upDownLookRange);
-        mainCamera.transform.localRotation = Quaternion.Euler(verticalRotation, 0, 0);
+        conversing = true;
+
+        if (animator == null) return;
+
+        Vector3 toNpc = npcPosition - transform.position;
+        toNpc.y = 0f;
+
+        Camera cam = Camera.main;
+        Vector3 camRight = cam != null ? cam.transform.right : Vector3.right;
+        Vector3 camForward = cam != null ? cam.transform.forward : Vector3.forward;
+        camRight.y = 0f;
+        camForward.y = 0f;
+        camRight.Normalize();
+        camForward.Normalize();
+
+        float x = Vector3.Dot(toNpc, camRight);
+        float y = Vector3.Dot(toNpc, camForward);
+
+        string state;
+        if (Mathf.Abs(x) >= Mathf.Abs(y))
+        {
+            state = sideState;
+            if (spriteRenderer != null) spriteRenderer.flipX = x > 0f;
+        }
+        else
+        {
+            state = y > 0f ? awayFromCameraState : towardCameraState;
+        }
+
+        animator.enabled = true;
+        animator.SetFloat("moveX", 0f);
+        animator.SetFloat("moveY", 0f);
+        animator.SetBool("isMoving", false);
+        animator.Play(state, 0, 0f);
+        animator.Update(0f);
+        animator.enabled = false;
     }
 
-    private void HandleRotation()
+    public void ExitConversation()
     {
-        if (GameplayBlocker.IsBlocked(BlockFlags.Camera)) return;
-        if (Cursor.lockState != CursorLockMode.Locked) return;
-        if (Time.frameCount < ignoreLookUntilFrame) return;
+        if (!conversing) return;
+        conversing = false;
 
-        float mx = playerInputHandler.RotationInput.x * mouseSensitivity;
-        float my = playerInputHandler.RotationInput.y * mouseSensitivity;
+        if (animator == null) return;
 
-        ApplyHorizontalRotation(mx);
-        ApplyVerticalRotation(my);
+        animator.enabled = true;
+        animator.Play(idleState, 0, 0f);
+        animator.Update(0f);
+    }
+
+    public void FaceToward(float worldX)
+    {
+        if (spriteRenderer == null) return;
+        spriteRenderer.flipX = worldX > transform.position.x;
     }
 
     public void Save(ref PlayerSaveData data)

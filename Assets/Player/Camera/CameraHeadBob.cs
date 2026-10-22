@@ -2,45 +2,44 @@ using UnityEngine;
 
 public class CameraHeadBob : MonoBehaviour
 {
-    private float frequency = 2.2f;
-    private float amplitude = 0.06f;
-    private float swayAmplitude = 0.025f;
-    private float smoothSpeed = 10f;
-    private float sprintMultiplier = 1.4f;
-    private float sneakMultiplier = 0.6f;
-
+    [Header("References")]
+    [SerializeField] private Transform visual; 
     [SerializeField] private PlayerModel playerModel;
     [SerializeField] private PlayerInputHandler inputHandler;
 
+    [Header("Bob")]
+    [SerializeField] private float frequency = 2.2f;    
+    [SerializeField] private float amplitude = 0.06f;    
+    [SerializeField] private float tiltAmount = 3f;       
+    [SerializeField] private float squashAmount = 0.04f;  
+    [SerializeField] private float smoothSpeed = 10f;
+    [SerializeField] private float sprintMultiplier = 1.4f;
+    [SerializeField] private float sneakMultiplier = 0.6f;
+
     private Vector3 restPosition;
-    private float Timer;
+    private Vector3 restScale;
+    private float timer;
     private float currentRoll;
 
     void Start()
     {
-        restPosition = transform.localPosition;
+        if (visual == null) visual = transform;
+        restPosition = visual.localPosition;
+        restScale = visual.localScale;
     }
 
     void LateUpdate()
     {
-        float pitch = playerModel != null ? playerModel.VerticalRotation : 0f;
+        if (visual == null) return;
 
-        if (GameplayBlocker.IsBlocked(BlockFlags.Camera))
-        {
-            Timer = 0f;
-            float blockedT = Time.unscaledDeltaTime * smoothSpeed;
-            transform.localPosition = Vector3.Lerp(transform.localPosition, restPosition, blockedT);
-            currentRoll = Mathf.Lerp(currentRoll, 0f, blockedT);
-            transform.localRotation = Quaternion.Euler(pitch, 0f, currentRoll);
-            return;
-        }
-
-        bool isMoving = inputHandler != null && inputHandler.MovementInput.sqrMagnitude > 0.01f;
+        bool blocked = GameplayBlocker.IsBlocked(BlockFlags.Camera); 
+        bool isMoving = !blocked && inputHandler != null && inputHandler.MovementInput.sqrMagnitude > 0.01f;
         bool isSprinting = playerModel != null && playerModel.IsSprinting;
         bool isSneaking = inputHandler != null && inputHandler.CrouchTriggered;
 
+        Vector3 targetPos = restPosition;
+        Vector3 targetScale = restScale;
         float targetRoll = 0f;
-        Vector3 targetPosition = restPosition;
 
         if (isMoving)
         {
@@ -48,23 +47,26 @@ public class CameraHeadBob : MonoBehaviour
             if (isSprinting) freq *= sprintMultiplier;
             else if (isSneaking) freq *= sneakMultiplier;
 
-            Timer += Time.deltaTime * freq;
+            timer += Time.deltaTime * freq;
 
-            float Y = Mathf.Sin(Timer * Mathf.PI * 2f) * amplitude;
-            float X = Mathf.Sin(Timer * Mathf.PI) * swayAmplitude;
-            float Z = Mathf.Sin(Timer * Mathf.PI * 2f) * swayAmplitude * 8f;
+            float hop = Mathf.Abs(Mathf.Sin(timer * Mathf.PI));
+            float side = Mathf.Sin(timer * Mathf.PI); 
 
-            targetPosition = restPosition + new Vector3(X, Y, 0f);
-            targetRoll = -Z;
+            targetPos = restPosition + new Vector3(0f, hop * amplitude, 0f);
+            targetRoll = -side * tiltAmount;
+
+            float squash = (hop - 0.5f) * squashAmount;
+            targetScale = new Vector3(restScale.x * (1f - squash), restScale.y * (1f + squash), restScale.z);
         }
         else
         {
-            Timer = 0f;
+            timer = 0f;
         }
 
-        float t = Time.deltaTime * smoothSpeed;
-        transform.localPosition = Vector3.Lerp(transform.localPosition, targetPosition, t);
+        float t = (blocked ? Time.unscaledDeltaTime : Time.deltaTime) * smoothSpeed;
+        visual.localPosition = Vector3.Lerp(visual.localPosition, targetPos, t);
+        visual.localScale = Vector3.Lerp(visual.localScale, targetScale, t);
         currentRoll = Mathf.Lerp(currentRoll, targetRoll, t);
-        transform.localRotation = Quaternion.Euler(pitch, 0f, currentRoll);
+        visual.localRotation = Quaternion.Euler(0f, 0f, currentRoll);
     }
 }
