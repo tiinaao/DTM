@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class QuestPoint : MonoBehaviour
+public class QuestPoint : MonoBehaviour, IInteractable
 {
     [SerializeField] private QuestInfoSO questInfoForPoint;
     [SerializeField] private bool startPoint = true;
@@ -38,6 +38,16 @@ public class QuestPoint : MonoBehaviour
         if (playerIsNear && Input.GetKeyDown(interactKey))
         {
             Interact();
+        }
+    }
+
+    public string InteractionText
+    {
+        get
+        {
+            if (currentQuestState == QuestState.CAN_START && startPoint) return "Start Quest";
+            if (currentQuestState == QuestState.CAN_FINISH && finishPoint) return "Finish Quest";
+            return string.Empty;
         }
     }
 

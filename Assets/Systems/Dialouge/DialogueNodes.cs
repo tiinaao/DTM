@@ -20,6 +20,20 @@ public class EndNode : Node
     }
 }
 
+internal static class DialoguePresentationOptions
+{
+    public const string CharacterOption = "character";
+    public const string EmotionOption = "emotion";
+    public const string VoiceLineOption = "voiceLine";
+
+    public static void Define(Node.IOptionDefinitionContext context)
+    {
+        context.AddOption<DialogueCharacter>(CharacterOption).WithDefaultValue(null);
+        context.AddOption<string>(EmotionOption).WithDefaultValue("");
+        context.AddOption<AudioClip>(VoiceLineOption).WithDefaultValue(null);
+    }
+}
+
 [Serializable]
 public class DialogueNode : Node
 {
@@ -30,6 +44,11 @@ public class DialogueNode : Node
 
         context.AddInputPort<string>("Speaker").Build();
         context.AddInputPort<string>("Dialogue").Build();
+    }
+
+    protected override void OnDefineOptions(IOptionDefinitionContext context)
+    {
+        DialoguePresentationOptions.Define(context);
     }
 }
 
@@ -51,12 +70,14 @@ public class ChoiceNode : Node
         for (int i = 0; i < portCount; i++)
         {
             context.AddInputPort<string>($"Choice Text {i}").Build();
+            context.AddInputPort<int>($"Choice Rep {i}").WithDefaultValue(0).Build();
             context.AddOutputPort($"Choice {i}").Build();
         }
     }
 
     protected override void OnDefineOptions(IOptionDefinitionContext context)
     {
+        DialoguePresentationOptions.Define(context);
         context.AddOption<int>(optionID).WithDefaultValue(2).Delayed();
     }
 }

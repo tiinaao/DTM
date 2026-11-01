@@ -7,6 +7,7 @@ public class InventorySystem : MonoBehaviour
     public const int Columns = 9;
     public const int Rows = 3;
     public const int MaxSlotsPerCategory = Columns * Rows;
+    public int Currency = 100;
 
     [SerializeField] private ItemDatabase itemDatabase;
 
@@ -16,6 +17,23 @@ public class InventorySystem : MonoBehaviour
     public List<InventoryItem> others = new List<InventoryItem>();
 
     public event Action OnInventoryChanged;
+
+    public bool SpendCurrency(int amount)
+    {
+        if (amount < 0 || Currency < amount) return false;
+
+        Currency -= amount;
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    public void AddCurrency(int amount)
+    {
+        if (amount <= 0) return;
+
+        Currency += amount;
+        OnInventoryChanged?.Invoke();
+    }
 
     private void Awake()
     {
@@ -32,6 +50,16 @@ public class InventorySystem : MonoBehaviour
             case ItemCategory.Wearable: return wearables;
             default: return others;
         }
+    }
+
+    public List<InventoryItem> GetAllItems()
+    {
+        var all = new List<InventoryItem>();
+        all.AddRange(consumables);
+        all.AddRange(weapons);
+        all.AddRange(wearables);
+        all.AddRange(others);
+        return all;
     }
 
     public bool HasSpaceFor(string itemId)
@@ -133,6 +161,7 @@ public class InventorySystem : MonoBehaviour
         public List<SavedItemStack> weapons;
         public List<SavedItemStack> wearables;
         public List<SavedItemStack> others;
+        public int currency;
     }
 
     public void Save(ref InventorySaveData data)
@@ -141,6 +170,7 @@ public class InventorySystem : MonoBehaviour
         data.weapons = ToSaveList(weapons);
         data.wearables = ToSaveList(wearables);
         data.others = ToSaveList(others);
+        data.currency = Currency;
     }
 
     public void Load(InventorySaveData data)
@@ -154,6 +184,8 @@ public class InventorySystem : MonoBehaviour
         FromSaveList(data.weapons);
         FromSaveList(data.wearables);
         FromSaveList(data.others);
+
+        Currency = data.currency;
 
         OnInventoryChanged?.Invoke();
     }

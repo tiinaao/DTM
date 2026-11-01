@@ -29,6 +29,8 @@ public class NPCInteraction : NPCBase
 
     public static NPCInteraction Current { get; private set; }
 
+    public bool IsInteracting => active;
+
     public static bool BlocksPause
     {
         get { return NPCInteractionUI.MenuIsOpen || Time.frameCount == lastEndFrame; }
@@ -59,6 +61,8 @@ public class NPCInteraction : NPCBase
     private bool savedFlip;
     private readonly List<string> labels = new List<string>();
 
+    public override string InteractionText => promptAction;
+
     private string Title
     {
         get
@@ -84,8 +88,8 @@ public class NPCInteraction : NPCBase
         options = new List<NPCOption>
         {
             new NPCOption { label = "Talk", type = NPCOptionType.Talk },
-            new NPCOption { label = "Gift", type = NPCOptionType.Custom },
-            new NPCOption { label = "Trade", type = NPCOptionType.Custom }
+            new NPCOption { label = "Gift", type = NPCOptionType.Custom, hideMenuWhileBusy = true },
+            new NPCOption { label = "Trade", type = NPCOptionType.Custom, hideMenuWhileBusy = true }
         };
 
         Collider[] colliders = GetComponents<Collider>();
@@ -96,7 +100,7 @@ public class NPCInteraction : NPCBase
 
         SphereCollider trigger = gameObject.AddComponent<SphereCollider>();
         trigger.isTrigger = true;
-        trigger.radius = 2f;
+        trigger.radius = 1f;
     }
 
     private void Awake()
@@ -141,7 +145,7 @@ public class NPCInteraction : NPCBase
         PlayerModel player = GetPlayer();
         float distance = player != null ? Vector3.Distance(player.transform.position, transform.position) : 0f;
 
-        NPCInteractionUI.Get().RequestPrompt(this, transform.position + promptOffset, promptKey, promptAction, distance);
+        NPCInteractionUI.Get().RequestPrompt(this, transform.position + promptOffset, promptKey, InteractionText, distance);
     }
 
     protected override void OnInteract()

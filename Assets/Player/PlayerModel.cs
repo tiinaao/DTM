@@ -8,6 +8,9 @@ public class PlayerModel : MonoBehaviour
     [SerializeField] private float sneakMultiplier = 0.4f;
     [SerializeField] private float gravityMultiplayer = 2.0f;
 
+    [Header("Camera Clamp")]
+    [SerializeField] private float minDistanceToCamera = 1.5f;
+
     [Header("References")]
     [SerializeField] private CharacterController characterController;
     [SerializeField] private PlayerInputHandler playerInputHandler;
@@ -18,11 +21,10 @@ public class PlayerModel : MonoBehaviour
     [SerializeField] private bool flipSpriteForLeft = true;
     [SerializeField] private float directionDeadzone = 0.1f;
 
-    [Header("Conversation Pose")]
-    [SerializeField] private string sideState = "walk_r";
-    [SerializeField] private string towardCameraState = "walk_f";
-    [SerializeField] private string awayFromCameraState = "walk_b";
-    [SerializeField] private string idleState = "idle";
+    private string sideState = "walk_r";
+    private string towardCameraState = "walk_f";
+    private string awayFromCameraState = "walk_b";
+    private string idleState = "idle";
 
     private Vector3 currentMovement;
     private Animator animator;
@@ -83,7 +85,19 @@ public class PlayerModel : MonoBehaviour
         Vector3 camForward;
         Vector3 camRight;
 
-        if (cam != null)
+        if (CameraFollow.Instance != null)
+        {
+            Quaternion baseRot = CameraFollow.Instance.BaseRotation;
+
+            camForward = baseRot * Vector3.forward;
+            camForward.y = 0f;
+            camForward.Normalize();
+
+            camRight = baseRot * Vector3.right;
+            camRight.y = 0f;
+            camRight.Normalize();
+        }
+        else if (cam != null)
         {
             camForward = cam.transform.forward;
             camForward.y = 0f;
@@ -116,12 +130,44 @@ public class PlayerModel : MonoBehaviour
         }
     }
 
+    private Vector3 ClampAgainstCamera(Vector3 horizontalMove)
+    {
+        Camera cam = Camera.main;
+        if (cam == null || horizontalMove.sqrMagnitude < 0.0000001f) return horizontalMove;
+
+        Vector3 camPos = cam.transform.position;
+        camPos.y = transform.position.y;
+
+        Vector3 currentToCam = camPos - transform.position;
+        float currentDist = currentToCam.magnitude;
+
+        Vector3 nextPos = transform.position + horizontalMove * Time.deltaTime;
+        Vector3 nextToCam = camPos - nextPos;
+        float nextDist = nextToCam.magnitude;
+
+        if (nextDist >= minDistanceToCamera || nextDist >= currentDist)
+            return horizontalMove;
+
+        if (currentDist < 0.0001f) return Vector3.zero;
+
+        Vector3 awayFromCam = -currentToCam.normalized;
+        float inwardComponent = Vector3.Dot(horizontalMove, -awayFromCam);
+
+        if (inwardComponent <= 0f) return horizontalMove;
+
+        Vector3 blockedMove = horizontalMove + awayFromCam * inwardComponent;
+        return blockedMove;
+    }
+
     private void HandleMovement()
     {
         Vector3 dir = CalculateWorldDirection();
 
-        currentMovement.x = dir.x * CurrentSpeed;
-        currentMovement.z = dir.z * CurrentSpeed;
+        Vector3 horizontal = new Vector3(dir.x * CurrentSpeed, 0f, dir.z * CurrentSpeed);
+        horizontal = ClampAgainstCamera(horizontal);
+
+        currentMovement.x = horizontal.x;
+        currentMovement.z = horizontal.z;
 
         HandleGravity();
 

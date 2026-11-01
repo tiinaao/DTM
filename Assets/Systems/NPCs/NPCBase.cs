@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class NPCBase : MonoBehaviour
+public abstract class NPCBase : MonoBehaviour, IInteractable
 {
     private static readonly Dictionary<string, NPCBase> registry = new Dictionary<string, NPCBase>();
 
@@ -9,6 +9,7 @@ public abstract class NPCBase : MonoBehaviour
     [SerializeField] private KeyCode interactKey = KeyCode.F;
     public string Id => string.IsNullOrEmpty(displayName) ? string.Empty : displayName.Trim().ToLower().Replace(" ", "_");
     public bool PlayerIsNear { get; private set; }
+    public virtual string InteractionText => string.Empty;
 
     public static NPCBase GetById(string id)
     {

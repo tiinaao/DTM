@@ -2890,8 +2890,10 @@ MonoBehaviour:
   DialoguePanel: {fileID: 237289144}
   SpeakerNameText: {fileID: 155289876}
   DialogueText: {fileID: 992665243}
+  SpeakerPortraitImage: {fileID: 0}
   ChoiceButtonPrefab: {fileID: 4038661443201374147, guid: 23bacf30345173442b7406b243812bf7, type: 3}
   ChoiceButtonContainer: {fileID: 587598508}
+  voiceSource: {fileID: 0}
   SlideDuration: 0.35
   HiddenPadding: 40
 --- !u!1 &237289144
@@ -5371,6 +5373,7 @@ MonoBehaviour:
   promptText: {fileID: 499166010}
   offset: {x: 0, y: 1.5, z: 0}
   playerInputHandler: {fileID: 1978000821}
+  interactRange: 3
 --- !u!1 &527035059
 GameObject:
   m_ObjectHideFlags: 0
@@ -6373,6 +6376,7 @@ MonoBehaviour:
   sprintMultiplier: 2
   sneakMultiplier: 0.4
   gravityMultiplayer: 2
+  minDistanceToCamera: 1.5
   characterController: {fileID: 724026009}
   playerInputHandler: {fileID: 1978000821}
   stamina: {fileID: 2133891808}
@@ -6380,6 +6384,10 @@ MonoBehaviour:
   animReach: {fileID: 1479883963}
   flipSpriteForLeft: 1
   directionDeadzone: 0.1
+  sideState: walk_r
+  towardCameraState: walk_f
+  awayFromCameraState: walk_b
+  idleState: idle
 --- !u!114 &724026012
 MonoBehaviour:
   m_ObjectHideFlags: 0

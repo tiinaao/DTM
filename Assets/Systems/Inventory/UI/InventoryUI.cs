@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,7 +8,7 @@ using UnityEngine.UI;
 public class InventoryUI : MonoBehaviour
 {
     [SerializeField] private GameObject inventoryPanel;
-    [SerializeField] private Transform itemListParent;
+    [SerializeField] private Transform itemGrid;
     [SerializeField] private GameObject itemSlotPrefab;
 
     [SerializeField] private GameObject detailPanel;
@@ -19,8 +20,11 @@ public class InventoryUI : MonoBehaviour
 
     [SerializeField] private PlayerInputHandler inputHandler;
 
+    [SerializeField] private TextMeshProUGUI currencyText;
+
     [SerializeField] private float popupHideDelay = 0.15f;
     [SerializeField] private Vector2 popupOffset = new Vector2(-12f, -12f);
+    
 
     public bool IsOpen => inventoryPanel.activeSelf;
 
@@ -32,6 +36,11 @@ public class InventoryUI : MonoBehaviour
     private float _hideTimer;
     private Canvas _canvas;
 
+    private Action<InventoryItem> _selectionCallback;
+    private Action _selectionCancelledCallback;
+
+    public bool IsSelecting => _selectionCallback != null;
+
     private const BlockFlags PauseBlocks =
         BlockFlags.Movement | BlockFlags.Camera | BlockFlags.Actions |
         BlockFlags.Interaction |
@@ -42,7 +51,7 @@ public class InventoryUI : MonoBehaviour
         Canvas parentCanvas = inventoryPanel.GetComponentInParent<Canvas>();
         _canvas = parentCanvas != null ? parentCanvas.rootCanvas : null;
 
-        if (itemListParent.TryGetComponent(out GridLayoutGroup grid))
+        if (itemGrid.TryGetComponent(out GridLayoutGroup grid))
         {
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = InventorySystem.Columns;
@@ -69,6 +78,12 @@ public class InventoryUI : MonoBehaviour
             GameManager.Instance.Inventory.OnInventoryChanged -= RefreshCurrentCategory;
         if (EquipmentSystem.Instance != null)
             EquipmentSystem.Instance.OnEquipmentChanged -= RefreshDetailPanel;
+    }
+
+    private void UpdateCurrencyText()
+    {
+        if (currencyText != null)
+            currencyText.text = GameManager.Instance.Inventory.Currency.ToString();
     }
 
     private void SetupPopupHover()
@@ -127,12 +142,43 @@ public class InventoryUI : MonoBehaviour
         {
             GameplayBlocker.Block(this, PauseBlocks);
             RefreshCurrentCategory();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(itemListParent.GetComponent<RectTransform>());
+            LayoutRebuilder.ForceRebuildLayoutImmediate(itemGrid.GetComponent<RectTransform>());
         }
         else
         {
             GameplayBlocker.Release(this);
+            CancelSelection();
         }
+    }
+
+    public void OpenForSelection(Action<InventoryItem> onItemSelected, Action onCancelled = null)
+    {
+        _selectionCallback = onItemSelected;
+        _selectionCancelledCallback = onCancelled;
+
+        if (!IsOpen) ToggleInventory();
+    }
+
+    public void OnSlotClicked(InventoryItem item)
+    {
+        if (_selectionCallback == null || item == null) return;
+
+        Action<InventoryItem> callback = _selectionCallback;
+        _selectionCallback = null;
+        _selectionCancelledCallback = null;
+
+        callback(item);
+    }
+
+    private void CancelSelection()
+    {
+        if (_selectionCallback == null && _selectionCancelledCallback == null) return;
+
+        Action cancelled = _selectionCancelledCallback;
+        _selectionCallback = null;
+        _selectionCancelledCallback = null;
+
+        cancelled?.Invoke();
     }
 
     public void ShowConsumables() => SwitchCategory(ItemCategory.Consumable);
@@ -149,9 +195,11 @@ public class InventoryUI : MonoBehaviour
 
     private void RefreshCurrentCategory()
     {
-        for (int i = itemListParent.childCount - 1; i >= 0; i--)
+        UpdateCurrencyText();
+
+        for (int i = itemGrid.childCount - 1; i >= 0; i--)
         {
-            GameObject child = itemListParent.GetChild(i).gameObject;
+            GameObject child = itemGrid.GetChild(i).gameObject;
             child.SetActive(false);
             Destroy(child);
         }
@@ -161,7 +209,7 @@ public class InventoryUI : MonoBehaviour
 
         for (int i = 0; i < totalSlots; i++)
         {
-            GameObject slotObj = Instantiate(itemSlotPrefab, itemListParent);
+            GameObject slotObj = Instantiate(itemSlotPrefab, itemGrid);
             ItemSlotUI slot = slotObj.GetComponent<ItemSlotUI>();
 
             if (i < list.Count)
@@ -170,7 +218,7 @@ public class InventoryUI : MonoBehaviour
                 slot.SetupEmpty();
         }
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(itemListParent.GetComponent<RectTransform>());
+        LayoutRebuilder.ForceRebuildLayoutImmediate(itemGrid.GetComponent<RectTransform>());
 
         if (_detailedItem != null && detailPanel.activeSelf)
         {

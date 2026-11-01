@@ -21,6 +21,8 @@ public class GameManager : MonoBehaviour
     public Stamina Stamina { get; set; }
     public InventorySystem Inventory { get; set; }
     public QuestManager Quests { get; set; }
+    public NPCShopManager Shops { get; set; }
+    public Reputation Reputation { get; set; }
 
     private void Awake()
     {

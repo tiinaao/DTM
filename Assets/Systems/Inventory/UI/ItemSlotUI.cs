@@ -104,5 +104,7 @@ public class ItemSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     public void OnClick()
     {
+        if (_item == null || _ui == null) return;
+        _ui.OnSlotClicked(_item);
     }
 }

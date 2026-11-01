@@ -50,6 +50,7 @@ public class DialogueGraphImporter : ScriptedImporter
         runtimeNode.SpeakerName = GetPortValue<string>(node.GetInputPortByName("Speaker"));
         runtimeNode.DialogueText = GetPortValue<string>(node.GetInputPortByName("Dialogue"));
         runtimeNode.NextNodeID = GetNextID(node.GetOutputPortByName("out"), nodeIDMap);
+        ApplyPresentation(node, runtimeNode);
     }
 
     private void ProcessChoiceNode(ChoiceNode node, RuntimeDialogueNode runtimeNode, Dictionary<INode, string> nodeIDMap)
@@ -57,6 +58,7 @@ public class DialogueGraphImporter : ScriptedImporter
         runtimeNode.NodeType = DialogueNodeType.Choice;
         runtimeNode.SpeakerName = GetPortValue<string>(node.GetInputPortByName("Speaker"));
         runtimeNode.DialogueText = GetPortValue<string>(node.GetInputPortByName("Dialogue"));
+        ApplyPresentation(node, runtimeNode);
 
         var choiceOutputPorts = node.GetOutputPorts().Where(p => p.Name.StartsWith("Choice "));
 
@@ -64,10 +66,12 @@ public class DialogueGraphImporter : ScriptedImporter
         {
             var index = outputPort.Name.Substring("Choice ".Length);
             var textPort = node.GetInputPortByName($"Choice Text {index}");
+            var repPort = node.GetInputPortByName($"Choice Rep {index}");
 
             var choiceData = new ChoiceData
             {
                 ChoiceText = GetPortValue<string>(textPort),
+                ReputationChange = GetPortValue<int>(repPort),
                 DestinationNodeID = GetNextID(outputPort, nodeIDMap)
             };
 
@@ -82,6 +86,13 @@ public class DialogueGraphImporter : ScriptedImporter
         runtimeNode.ItemName = GetOptionValue<string>(node, ItemNode.ItemIDOption);
         runtimeNode.Amount = Mathf.Max(1, GetOptionValue<int>(node, ItemNode.AmountOption));
         runtimeNode.NextNodeID = GetNextID(node.GetOutputPortByName("out"), nodeIDMap);
+    }
+
+    private void ApplyPresentation(INode node, RuntimeDialogueNode runtimeNode)
+    {
+        runtimeNode.Character = GetOptionValue<DialogueCharacter>(node, DialoguePresentationOptions.CharacterOption);
+        runtimeNode.EmotionName = GetOptionValue<string>(node, DialoguePresentationOptions.EmotionOption);
+        runtimeNode.VoiceLine = GetOptionValue<AudioClip>(node, DialoguePresentationOptions.VoiceLineOption);
     }
 
     private string GetNextID(IPort outputPort, Dictionary<INode, string> nodeIDMap)

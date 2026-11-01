@@ -23,5 +23,7 @@ public class ItemData : ScriptableObject
 
     public bool isEquippable;
 
+    public int value = 1;
+
     public virtual void Use() { }
 }

@@ -20,9 +20,12 @@ public class DialogueManager : MonoBehaviour
     public GameObject DialoguePanel;
     public TextMeshProUGUI SpeakerNameText;
     public TextMeshProUGUI DialogueText;
+    public RawImage SpeakerPortraitImage;
 
     public Button ChoiceButtonPrefab;
     public Transform ChoiceButtonContainer;
+
+    [SerializeField] private AudioSource voiceSource;
 
     public float SlideDuration = 0.35f;
     public float HiddenPadding = 40f;
@@ -141,6 +144,8 @@ public class DialogueManager : MonoBehaviour
 
         IsDialogueActive = false;
 
+        if (voiceSource != null) voiceSource.Stop();
+
         DialogueEnded?.Invoke();
 
         BeginSlide(false);
@@ -208,7 +213,13 @@ public class DialogueManager : MonoBehaviour
     {
         _currentNode = node;
 
-        SpeakerNameText.SetText(node.SpeakerName);
+        string speakerName = node.Character != null && !string.IsNullOrEmpty(node.Character.characterName)
+            ? node.Character.characterName
+            : node.SpeakerName;
+        SpeakerNameText.SetText(speakerName);
+
+        ApplyPortrait(node);
+        PlayVoiceLine(node);
 
         if (_displayLineCoroutine != null)
         {
@@ -230,8 +241,55 @@ public class DialogueManager : MonoBehaviour
             }
 
             string destination = choice.DestinationNodeID;
-            button.onClick.AddListener(() => ShowNode(destination));
+            int repChange = choice.ReputationChange;
+
+            button.onClick.AddListener(() =>
+            {
+                ApplyReputation(repChange);
+                ShowNode(destination);
+            });
         }
+    }
+
+    private void ApplyReputation(int delta)
+    {
+        if (delta == 0) return;
+
+        var rep = GameManager.Instance.Reputation;
+        rep.ChangeReputation(delta);
+    }
+
+    private void ApplyPortrait(RuntimeDialogueNode node)
+    {
+        if (SpeakerPortraitImage == null) return;
+
+        Sprite portrait = node.Character != null ? node.Character.GetPortrait(node.EmotionName) : null;
+
+        if (portrait == null)
+        {
+            SpeakerPortraitImage.gameObject.SetActive(false);
+            return;
+        }
+
+        SpeakerPortraitImage.texture = portrait.texture;
+
+        Rect r = portrait.textureRect;
+        Texture tex = portrait.texture;
+        SpeakerPortraitImage.uvRect = new Rect(
+            r.x / tex.width,
+            r.y / tex.height,
+            r.width / tex.width,
+            r.height / tex.height);
+
+        SpeakerPortraitImage.gameObject.SetActive(true);
+    }
+
+    private void PlayVoiceLine(RuntimeDialogueNode node)
+    {
+        if (voiceSource == null || node.VoiceLine == null) return;
+
+        voiceSource.Stop();
+        voiceSource.PlayOneShot(node.VoiceLine);
     }
 
     private IEnumerator DisplayLine(string line)

@@ -31,6 +31,10 @@ public class RuntimeDialogueNode
     public List<ChoiceData> Choices = new List<ChoiceData>();
     public string NextNodeID;
 
+    public DialogueCharacter Character;
+    public string EmotionName;
+    public AudioClip VoiceLine;
+
     public string ItemName;
     public int Amount = 1;
     public ItemAction ItemOperation;
@@ -44,4 +48,5 @@ public class ChoiceData
 {
     public string ChoiceText;
     public string DestinationNodeID;
+    public int ReputationChange;
 }
