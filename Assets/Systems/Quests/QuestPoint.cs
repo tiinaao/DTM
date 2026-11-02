@@ -5,12 +5,12 @@ public class QuestPoint : MonoBehaviour, IInteractable
     [SerializeField] private QuestInfoSO questInfoForPoint;
     [SerializeField] private bool startPoint = true;
     [SerializeField] private bool finishPoint = true;
-    [SerializeField] private KeyCode interactKey = KeyCode.F;
 
     private bool playerIsNear;
     private string questId;
     private QuestState currentQuestState = QuestState.REQUIREMENTS_NOT_MET;
     private QuestIcon questIcon;
+    private PlayerInputHandler input;
 
     private void Awake()
     {
@@ -25,20 +25,21 @@ public class QuestPoint : MonoBehaviour, IInteractable
 
     private void OnDisable()
     {
-        if (GameEventsManager.instance == null)
-        {
-            return;
-        }
+        InteractionSelector.Unregister(this);
+        playerIsNear = false;
 
+        if (GameEventsManager.instance == null) return;
         GameEventsManager.instance.questEvents.onQuestStateChange -= QuestStateChange;
     }
 
     private void Update()
     {
-        if (playerIsNear && Input.GetKeyDown(interactKey))
-        {
-            Interact();
-        }
+        if (!playerIsNear) return;
+        if (GameplayBlocker.IsBlocked(BlockFlags.Interaction)) return;
+        if (!InteractionSelector.IsActive(this)) return;
+
+        if (input == null) input = FindAnyObjectByType<PlayerInputHandler>();
+        if (input != null && input.InteractTriggered) Interact();
     }
 
     public string InteractionText
@@ -53,10 +54,8 @@ public class QuestPoint : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        if (!playerIsNear)
-        {
-            return;
-        }
+        if (!playerIsNear) return;
+        if (!InteractionSelector.IsActive(this)) return; 
 
         if (currentQuestState == QuestState.CAN_START && startPoint)
         {
@@ -70,31 +69,24 @@ public class QuestPoint : MonoBehaviour, IInteractable
 
     private void QuestStateChange(Quest quest)
     {
-        if (quest.info.id != questId)
-        {
-            return;
-        }
+        if (quest.info.id != questId) return;
 
         currentQuestState = quest.state;
         if (questIcon != null)
-        {
             questIcon.SetState(currentQuestState, startPoint, finishPoint);
-        }
     }
 
     private void OnTriggerEnter(Collider otherCollider)
     {
-        if (otherCollider.CompareTag("Player"))
-        {
-            playerIsNear = true;
-        }
+        if (!otherCollider.CompareTag("Player")) return;
+        playerIsNear = true;
+        InteractionSelector.Register(this, transform);
     }
 
     private void OnTriggerExit(Collider otherCollider)
     {
-        if (otherCollider.CompareTag("Player"))
-        {
-            playerIsNear = false;
-        }
+        if (!otherCollider.CompareTag("Player")) return;
+        playerIsNear = false;
+        InteractionSelector.Unregister(this);
     }
 }

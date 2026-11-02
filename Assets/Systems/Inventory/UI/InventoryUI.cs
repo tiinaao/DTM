@@ -24,7 +24,7 @@ public class InventoryUI : MonoBehaviour
 
     [SerializeField] private float popupHideDelay = 0.15f;
     [SerializeField] private Vector2 popupOffset = new Vector2(-12f, -12f);
-    
+
 
     public bool IsOpen => inventoryPanel.activeSelf;
 
@@ -213,9 +213,20 @@ public class InventoryUI : MonoBehaviour
             ItemSlotUI slot = slotObj.GetComponent<ItemSlotUI>();
 
             if (i < list.Count)
-                slot.Setup(list[i], this);
+            {
+                InventoryItem item = list[i];
+                slot.Setup(
+                    item.data,
+                    item.quantity,
+                    s => OnSlotHover(s, item),
+                    s => OnSlotHoverEnd(s),
+                    s => OnSlotClicked(item),
+                    null);
+            }
             else
+            {
                 slot.SetupEmpty();
+            }
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(itemGrid.GetComponent<RectTransform>());

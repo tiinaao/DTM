@@ -16,3 +16,4 @@ MonoBehaviour:
   emotions:
   - emotionName: happy
     sprite: {fileID: 21300000, guid: 0f7a286d9df07fc499b28a2ed1eb393a, type: 3}
+  giftPreferences: []

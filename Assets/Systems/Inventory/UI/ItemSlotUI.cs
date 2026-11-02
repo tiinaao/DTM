@@ -1,26 +1,31 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 
-public class ItemSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class ItemSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] private Image icon;
     [SerializeField] private TextMeshProUGUI quantityText;
     [SerializeField] private Image outline;
+    [SerializeField] private TextMeshProUGUI priceText;
 
     [SerializeField] private float fadeSpeed = 12f;
     [SerializeField] private float hoverScale = 1.08f;
     [SerializeField] private float scaleSpeed = 10f;
 
-    private InventoryItem _item;
-    private InventoryUI _ui;
+    public ItemData Data { get; private set; }
+    public RectTransform Rect => (RectTransform)transform;
+
+    private Action<ItemSlotUI> onHoverEnter;
+    private Action<ItemSlotUI> onHoverExit;
+    private Action<ItemSlotUI> onLeftClick;
+    private Action<ItemSlotUI> onRightClick;
 
     private float targetAlpha;
     private Vector3 baseScale;
     private Vector3 targetScale;
-
-    public RectTransform Rect => (RectTransform)transform;
 
     private void Awake()
     {
@@ -33,32 +38,60 @@ public class ItemSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
             c.a = 0f;
             outline.color = c;
         }
+
+        if (priceText != null)
+            priceText.gameObject.SetActive(false);
     }
 
-    public void Setup(InventoryItem item, InventoryUI ui)
+    public void Setup(
+        ItemData data,
+        int quantity,
+        Action<ItemSlotUI> onHoverEnter,
+        Action<ItemSlotUI> onHoverExit,
+        Action<ItemSlotUI> onLeftClick,
+        Action<ItemSlotUI> onRightClick,
+        int? price = null,
+        int stock = -1)
     {
-        _item = item;
-        _ui = ui;
+        Data = data;
+        this.onHoverEnter = onHoverEnter;
+        this.onHoverExit = onHoverExit;
+        this.onLeftClick = onLeftClick;
+        this.onRightClick = onRightClick;
 
         icon.enabled = true;
-        icon.sprite = item.data.icon;
+        icon.sprite = data.icon;
 
-        quantityText.text = item.data.isStackable && item.quantity > 0
-            ? item.quantity.ToString("D2")
+        bool soldOut = stock == 0;
+
+        quantityText.text = data.isStackable && quantity > 0
+            ? quantity.ToString("D2")
             : "";
 
-        if (TryGetComponent(out Button button))
-            button.interactable = true;
+        if (priceText != null)
+        {
+            priceText.gameObject.SetActive(price.HasValue);
+            priceText.text = !price.HasValue ? "" : soldOut ? "Sold out" : price.Value.ToString();
+        }
     }
 
     public void SetupEmpty()
     {
-        _item = null;
-        _ui = null;
+        Data = null;
+        onHoverEnter = null;
+        onHoverExit = null;
+        onLeftClick = null;
+        onRightClick = null;
 
         icon.sprite = null;
         icon.enabled = false;
         quantityText.text = "";
+
+        if (priceText != null)
+        {
+            priceText.gameObject.SetActive(false);
+            priceText.text = "";
+        }
 
         if (TryGetComponent(out Button button))
             button.interactable = false;
@@ -84,13 +117,13 @@ public class ItemSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (_item == null) return;
+        if (Data == null) return;
 
         UISoundManager.instance.Play("hover");
         targetAlpha = 1f;
         targetScale = baseScale * hoverScale;
 
-        _ui.OnSlotHover(this, _item);
+        onHoverEnter?.Invoke(this);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -98,13 +131,17 @@ public class ItemSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         targetAlpha = 0f;
         targetScale = baseScale;
 
-        if (_item != null && _ui != null)
-            _ui.OnSlotHoverEnd(this);
+        if (Data != null)
+            onHoverExit?.Invoke(this);
     }
 
-    public void OnClick()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        if (_item == null || _ui == null) return;
-        _ui.OnSlotClicked(_item);
+        if (Data == null) return;
+
+        if (eventData.button == PointerEventData.InputButton.Left)
+            onLeftClick?.Invoke(this);
+        else if (eventData.button == PointerEventData.InputButton.Right)
+            onRightClick?.Invoke(this);
     }
 }

@@ -15,7 +15,7 @@ public class NPCOption
 {
     public string label = "Option";
     public NPCOptionType type = NPCOptionType.Custom;
-    public bool hideMenuWhileBusy = false;
+    public bool hideMenuWhileBusy = true;
     public bool endInteraction = false;
     public UnityEvent onSelected;
 }
@@ -112,17 +112,20 @@ public class NPCInteraction : NPCBase
     {
         if (active) EndInteraction();
         nearby.Remove(this);
+        InteractionSelector.Unregister(this);
         base.OnDisable();
     }
 
     protected override void OnPlayerEnter()
     {
         if (!nearby.Contains(this)) nearby.Add(this);
+        InteractionSelector.Register(this, transform);
     }
 
     protected override void OnPlayerExit()
     {
         nearby.Remove(this);
+        InteractionSelector.Unregister(this);
     }
 
     protected override void Update()
@@ -193,20 +196,7 @@ public class NPCInteraction : NPCBase
 
     private bool IsClosestNearby()
     {
-        PlayerModel player = GetPlayer();
-        if (player == null) return nearby.Count == 0 || nearby[0] == this;
-
-        float mine = (player.transform.position - transform.position).sqrMagnitude;
-        for (int i = 0; i < nearby.Count; i++)
-        {
-            NPCInteraction other = nearby[i];
-            if (other == this || other == null) continue;
-
-            float theirs = (player.transform.position - other.transform.position).sqrMagnitude;
-            if (theirs < mine) return false;
-        }
-
-        return true;
+        return InteractionSelector.IsActive(this);
     }
 
     private void Begin()

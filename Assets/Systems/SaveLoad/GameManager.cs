@@ -20,9 +20,11 @@ public class GameManager : MonoBehaviour
     public Health Health { get; set; }
     public Stamina Stamina { get; set; }
     public InventorySystem Inventory { get; set; }
+    public EquipmentSystem Equipment { get; set; }
     public QuestManager Quests { get; set; }
     public NPCShopManager Shops { get; set; }
     public Reputation Reputation { get; set; }
+    public SunCycle Sun { get; set; }
 
     private void Awake()
     {

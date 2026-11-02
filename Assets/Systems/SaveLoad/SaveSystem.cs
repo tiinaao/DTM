@@ -72,9 +72,11 @@ public static class SaveSystem
         public HealthSaveData HealthData;
         public StaminaSaveData StaminaData;
         public InventorySaveData InventoryData;
+        public EquipmentSaveData EquipmentData;
         public QuestSaveData QuestsData;
         public NPCShopSaveData ShopsData;
         public ReputationSaveData ReputationData;
+        public TimeSaveData TimeData;
     }
 
     [Serializable]
@@ -315,6 +317,12 @@ public static class SaveSystem
         if (GameManager.Instance.Inventory != null)
             GameManager.Instance.Inventory.Save(ref data.InventoryData);
 
+        if (GameManager.Instance.Sun != null)
+            GameManager.Instance.Sun.Save(ref data.TimeData);
+
+        if (GameManager.Instance.Equipment != null)
+            GameManager.Instance.Equipment.Save(ref data.EquipmentData);
+
         if (GameManager.Instance.Quests != null)
             GameManager.Instance.Quests.Save(ref data.QuestsData);
 
@@ -323,6 +331,9 @@ public static class SaveSystem
 
         if (GameManager.Instance.Reputation != null)
             GameManager.Instance.Reputation.Save(ref data.ReputationData);
+
+        if (GameManager.Instance.Sun != null)
+            GameManager.Instance.Sun.Save(ref data.TimeData);
     }
 
     private static void ApplyData(SaveData data)
@@ -339,6 +350,12 @@ public static class SaveSystem
         if (GameManager.Instance.Inventory != null)
             GameManager.Instance.Inventory.Load(data.InventoryData);
 
+        if (GameManager.Instance.Sun != null)
+            GameManager.Instance.Sun.Load(data.TimeData);
+
+        if (GameManager.Instance.Equipment != null)
+            GameManager.Instance.Equipment.Load(data.EquipmentData);
+
         if (GameManager.Instance.Quests != null)
             GameManager.Instance.Quests.Load(data.QuestsData);
 
@@ -347,5 +364,8 @@ public static class SaveSystem
 
         if (GameManager.Instance.Reputation != null)
             GameManager.Instance.Reputation.Load(data.ReputationData);
+
+        if (GameManager.Instance.Sun != null)
+            GameManager.Instance.Sun.Load(data.TimeData);
     }
 }

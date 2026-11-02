@@ -14,13 +14,28 @@ public class NPCShopHandler : MonoBehaviour
 {
     [SerializeField] private List<ShopStockEntry> stock = new List<ShopStockEntry>();
     [SerializeField] private bool allowBartering = true;
-    [SerializeField] private bool applyDiscount = false;
+    [SerializeField, Range(0f, 100f)] private float discountPercent = 0f;
     [SerializeField] private float sellMultiplier = 0.5f;
 
     private NPCBase npcBase;
 
     public IReadOnlyList<ShopStockEntry> Stock => stock;
     public bool AllowBartering => allowBartering;
+    public float DiscountPercent => discountPercent;
+
+    public void SetDiscount(float percent)
+    {
+        discountPercent = Mathf.Clamp(percent, 0f, 100f);
+    }
+
+    public int GetBuyPrice(ShopStockEntry entry)
+    {
+        if (entry == null) return 0;
+        if (discountPercent >= 100f) return 0;
+
+        int discounted = Mathf.RoundToInt(entry.price * (1f - discountPercent / 100f));
+        return Mathf.Max(1, discounted);
+    }
 
     private void Awake()
     {
@@ -72,7 +87,7 @@ public class NPCShopHandler : MonoBehaviour
         if (entry.stock > 0 && entry.stock < quantity) return false;
 
         InventorySystem inventory = GameManager.Instance.Inventory;
-        int totalPrice = entry.price * quantity;
+        int totalPrice = GetBuyPrice(entry) * quantity;
 
         if (!inventory.SpendCurrency(totalPrice)) return false;
 

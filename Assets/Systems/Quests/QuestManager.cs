@@ -176,7 +176,38 @@ public class QuestManager : MonoBehaviour
             return;
         }
 
+        GrantRewards(quest.info);
         ChangeQuestState(id, QuestState.FINISHED);
+    }
+
+    private void GrantRewards(QuestInfoSO info)
+    {
+        InventorySystem inventory = GameManager.Instance.Inventory;
+        if (inventory != null)
+        {
+            if (info.moraReward > 0) inventory.AddCurrency(info.moraReward);
+
+            if (info.itemRewards != null)
+            {
+                foreach (QuestItemReward reward in info.itemRewards)
+                {
+                    if (reward == null || reward.item == null || reward.amount <= 0) continue;
+                    if (!inventory.AddItem(reward.item.itemId, reward.amount))
+                        Debug.LogWarning("Quest reward not added (inventory full?): " + reward.item.itemName);
+                }
+            }
+        }
+
+        Reputation reputation = GameManager.Instance.Reputation;
+        if (reputation != null && info.reputationReward != 0)
+            reputation.ChangeReputation(info.reputationReward);
+    }
+
+    public bool TryGetState(string id, out QuestState state)
+    {
+        Quest quest = GetQuestById(id);
+        state = quest != null ? quest.state : QuestState.REQUIREMENTS_NOT_MET;
+        return quest != null;
     }
 
     private void QuestStepStateChange(string id, int stepIndex, QuestStepState questStepState)

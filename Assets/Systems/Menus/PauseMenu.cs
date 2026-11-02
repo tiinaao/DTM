@@ -5,6 +5,7 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private GameObject menuRoot;
     [SerializeField] private PlayerInputHandler playerInputHandler;
     [SerializeField] private InventoryUI inventoryUI;
+    [SerializeField] private ShopUI shopUI;
 
     private const BlockFlags PauseBlocks =
         BlockFlags.Movement | BlockFlags.Camera | BlockFlags.Actions |
@@ -26,6 +27,12 @@ public class PauseMenu : MonoBehaviour
         if (inventoryUI != null && inventoryUI.IsOpen)
         {
             inventoryUI.ToggleInventory();
+            return;
+        }
+
+        if (shopUI != null && shopUI.IsOpen)
+        {
+            shopUI.Close();
             return;
         }
 

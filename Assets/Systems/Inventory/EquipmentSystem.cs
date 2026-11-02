@@ -5,6 +5,8 @@ public class EquipmentSystem : MonoBehaviour
 {
     public static EquipmentSystem Instance { get; private set; }
 
+    [SerializeField] private ItemDatabase itemDatabase;
+
     public ItemData equippedWeaponPrimary;
     public ItemData equippedWeaponSecondary;
     private int activeWeaponIndex = 0;
@@ -21,7 +23,8 @@ public class EquipmentSystem : MonoBehaviour
     private void Start()
     {
         GameManager.Instance.Inventory.OnInventoryChanged += CheckEquippedItems;
-    }
+        GameManager.Instance.Equipment = this;
+}
 
     private void OnDestroy()
     {
@@ -130,4 +133,44 @@ public class EquipmentSystem : MonoBehaviour
     {
         OnEquipmentChanged?.Invoke();
     }
+    public void Save(ref EquipmentSaveData data)
+    {
+        data.weaponPrimaryId = equippedWeaponPrimary?.itemId;
+        data.weaponSecondaryId = equippedWeaponSecondary?.itemId;
+        data.consumableRId = equippedConsumableR?.itemId;
+        data.consumableExtraId = equippedConsumableExtra?.itemId;
+        data.activeWeaponIndex = activeWeaponIndex;
+    }
+
+    public void Load(EquipmentSaveData data)
+    {
+        equippedWeaponPrimary = Find(data.weaponPrimaryId);
+        equippedWeaponSecondary = Find(data.weaponSecondaryId);
+        equippedConsumableR = Find(data.consumableRId);
+        equippedConsumableExtra = Find(data.consumableExtraId);
+
+        activeWeaponIndex = data.activeWeaponIndex;
+
+        if (activeWeaponIndex == 0 && equippedWeaponPrimary == null && equippedWeaponSecondary != null)
+            activeWeaponIndex = 1;
+        else if (activeWeaponIndex == 1 && equippedWeaponSecondary == null && equippedWeaponPrimary != null)
+            activeWeaponIndex = 0;
+
+        OnEquipmentChanged?.Invoke();
+    }
+
+    private ItemData Find(string id)
+    {
+        return string.IsNullOrEmpty(id) ? null : itemDatabase.GetItemById(id);
+    }
+}
+
+[System.Serializable]
+public struct EquipmentSaveData
+{
+    public string weaponPrimaryId;
+    public string weaponSecondaryId;
+    public string consumableRId;
+    public string consumableExtraId;
+    public int activeWeaponIndex;
 }

@@ -8,6 +8,8 @@ public class LoadingSceneManager : MonoBehaviour
     public string mainSceneName = "Main";
     public float minimumLoadTime = 1.5f;
 
+    public static int PendingLoadSlot = -1;
+
     private ShaderWarmupComponent shaderWarmup;
 
     private void Awake()
@@ -41,6 +43,18 @@ public class LoadingSceneManager : MonoBehaviour
         }
 
         yield return new WaitForSeconds(0.3f);
-        SceneManager.LoadScene(mainSceneName);
+
+        int slot = PendingLoadSlot;
+        PendingLoadSlot = -1;
+
+        AsyncOperation op = SceneManager.LoadSceneAsync(mainSceneName);
+        yield return op;
+
+        if (SaveSystem.IsValidSlot(slot))
+        {
+            LoadResult result = SaveSystem.Load(slot);
+            if (result == LoadResult.Failed)
+                Debug.LogWarning("Failed to load slot " + slot);
+        }
     }
 }
